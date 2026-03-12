@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-  Alert, Modal, Platform, Pressable, ScrollView,
+  Alert, Linking, Modal, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,6 +14,29 @@ const OP_COLORS: Record<string, string> = {
 const OP_NAMES: Record<string, string> = {
   zain: "زين", orange: "أورنج", umniah: "أمنية",
 };
+
+function formatPhoneForWhatsApp(phone: string): string {
+  const cleaned = phone.replace(/\D/g, "");
+  if (cleaned.startsWith("00")) return cleaned.slice(2);
+  if (cleaned.startsWith("0")) return "962" + cleaned.slice(1);
+  if (cleaned.startsWith("962")) return cleaned;
+  return "962" + cleaned;
+}
+
+function sendWhatsApp(phone: string, cardName: string, cardPrice: number) {
+  const formatted = formatPhoneForWhatsApp(phone);
+  const message =
+    `السلام عليكم 👋\n` +
+    `طلبك لـ ${cardName} (${cardPrice} JD) جاهز للمعالجة.\n\n` +
+    `يرجى إتمام الدفع عبر رابط الدفع:\n` +
+    `*AYOUB272*\n\n` +
+    `بمجرد تأكيد الدفع سيتم شحن الرقم فوراً ✅`;
+  const encoded = encodeURIComponent(message);
+  const url = `https://wa.me/${formatted}?text=${encoded}`;
+  Linking.openURL(url).catch(() =>
+    Alert.alert("خطأ", "لا يمكن فتح واتساب. تأكد من تثبيت التطبيق.")
+  );
+}
 
 function RequestItem({
   req,
@@ -48,6 +71,7 @@ function RequestItem({
             <Text style={styles.reqUserPhone}>{req.userPhone}</Text>
           </View>
         </View>
+
         <View style={styles.reqMid}>
           <View style={[styles.opBadge, { backgroundColor: opColor + "20" }]}>
             <View style={[styles.opDot, { backgroundColor: opColor }]} />
@@ -58,32 +82,46 @@ function RequestItem({
             <Text style={[styles.reqPrice, { color: opColor }]}>{req.cardPrice} JD</Text>
           </View>
         </View>
+
         <Text style={styles.reqDate}>{dateStr}</Text>
 
         {isPending && (
-          <View style={styles.reqActions}>
+          <>
             <Pressable
-              style={({ pressed }) => [styles.rejectBtn, pressed && { opacity: 0.8 }]}
-              onPress={() => setShowReject(true)}
+              style={({ pressed }) => [styles.whatsappBtn, pressed && { opacity: 0.82 }]}
+              onPress={() => sendWhatsApp(req.userPhone, req.cardName, req.cardPrice)}
             >
-              <Feather name="x" size={15} color="#EF4444" />
-              <Text style={styles.rejectBtnText}>رفض</Text>
+              <View style={styles.whatsappIcon}>
+                <Feather name="message-circle" size={16} color="#fff" />
+              </View>
+              <Text style={styles.whatsappBtnText}>أرسل رابط الدفع عبر واتساب</Text>
+              <Feather name="external-link" size={14} color="#25D366" />
             </Pressable>
-            <Pressable
-              style={({ pressed }) => [styles.approveBtn, { backgroundColor: opColor }, pressed && { opacity: 0.8 }]}
-              onPress={() => Alert.alert(
-                "تأكيد الموافقة",
-                `شحن ${req.cardName} على رقم ${req.userPhone}؟`,
-                [
-                  { text: "إلغاء", style: "cancel" },
-                  { text: "موافقة", onPress: onApprove },
-                ]
-              )}
-            >
-              <Feather name="check" size={15} color="#fff" />
-              <Text style={styles.approveBtnText}>موافقة وشحن</Text>
-            </Pressable>
-          </View>
+
+            <View style={styles.reqActions}>
+              <Pressable
+                style={({ pressed }) => [styles.rejectBtn, pressed && { opacity: 0.8 }]}
+                onPress={() => setShowReject(true)}
+              >
+                <Feather name="x" size={15} color="#EF4444" />
+                <Text style={styles.rejectBtnText}>رفض</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [styles.approveBtn, { backgroundColor: opColor }, pressed && { opacity: 0.8 }]}
+                onPress={() => Alert.alert(
+                  "تأكيد الموافقة",
+                  `شحن ${req.cardName} على رقم ${req.userPhone}؟`,
+                  [
+                    { text: "إلغاء", style: "cancel" },
+                    { text: "موافقة وشحن", onPress: onApprove },
+                  ]
+                )}
+              >
+                <Feather name="zap" size={15} color="#fff" />
+                <Text style={styles.approveBtnText}>موافقة وشحن</Text>
+              </Pressable>
+            </View>
+          </>
         )}
 
         {!isPending && (
@@ -98,7 +136,7 @@ function RequestItem({
             <Text style={[styles.resolvedText, {
               color: req.status === "approved" ? "#065F46" : "#991B1B",
             }]}>
-              {req.status === "approved" ? "تمت الموافقة والشحن" : `مرفوض${req.adminNote ? ": " + req.adminNote : ""}`}
+              {req.status === "approved" ? "✅ تم الشحن بنجاح" : `مرفوض${req.adminNote ? ": " + req.adminNote : ""}`}
             </Text>
           </View>
         )}
@@ -191,7 +229,7 @@ export default function RequestsScreen() {
               key={req.id}
               req={req}
               onApprove={() => approveRequest(req.id)}
-              onReject={(note) => rejectRequest(req.id, note)}
+              onReject={(n) => rejectRequest(req.id, n)}
             />
           ))
         )}
@@ -210,8 +248,7 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 10 },
   headerTitle: { fontSize: 22, fontFamily: "Inter_700Bold", color: "#0F172A" },
   pendingBadge: {
-    backgroundColor: "#EF4444", borderRadius: 12,
-    paddingHorizontal: 8, paddingVertical: 2,
+    backgroundColor: "#EF4444", borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2,
   },
   pendingBadgeText: { color: "#fff", fontFamily: "Inter_700Bold", fontSize: 13 },
   filterRow: { flexDirection: "row", gap: 8, justifyContent: "flex-end" },
@@ -244,7 +281,22 @@ const styles = StyleSheet.create({
   reqCardName: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#0F172A", textAlign: "right" },
   reqPrice: { fontSize: 16, fontFamily: "Inter_700Bold", textAlign: "right" },
   reqDate: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#94A3B8", textAlign: "right" },
-  reqActions: { flexDirection: "row", gap: 8, marginTop: 4 },
+
+  whatsappBtn: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: "#F0FDF4", borderWidth: 1.5, borderColor: "#25D366",
+    borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14,
+    marginTop: 2,
+  },
+  whatsappIcon: {
+    width: 26, height: 26, borderRadius: 8, backgroundColor: "#25D366",
+    alignItems: "center", justifyContent: "center",
+  },
+  whatsappBtnText: {
+    flex: 1, fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#15803D", textAlign: "right",
+  },
+
+  reqActions: { flexDirection: "row", gap: 8 },
   rejectBtn: {
     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5,
     borderWidth: 1.5, borderColor: "#EF4444", borderRadius: 12, paddingVertical: 10,
@@ -255,11 +307,12 @@ const styles = StyleSheet.create({
     borderRadius: 12, paddingVertical: 10,
   },
   approveBtnText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#fff" },
+
   resolvedBadge: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    borderRadius: 10, padding: 8,
+    flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 10, padding: 8,
   },
   resolvedText: { fontSize: 12, fontFamily: "Inter_500Medium", flex: 1, textAlign: "right" },
+
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
   modalCard: {
     backgroundColor: "#FFFFFF", borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 16,

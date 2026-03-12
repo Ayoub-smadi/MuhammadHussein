@@ -5,10 +5,7 @@ import React from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { useApp } from "@/context/AppContext";
-
-export default function AdminTabLayout() {
-  const { pendingRequestsCount } = useApp();
+export default function UserTabLayout() {
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
   const insets = useSafeAreaInsets();
@@ -37,42 +34,26 @@ export default function AdminTabLayout() {
       }}
     >
       <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: "الرئيسية",
-          tabBarIcon: ({ color }) => <Feather name="bar-chart-2" size={22} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="requests"
-        options={{
-          title: "الطلبات",
-          tabBarBadge: pendingRequestsCount > 0 ? pendingRequestsCount : undefined,
-          tabBarIcon: ({ color }) => <Feather name="bell" size={22} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="customers"
-        options={{
-          title: "العملاء",
-          tabBarIcon: ({ color }) => <Feather name="users" size={22} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="cards"
+        name="buy"
         options={{
           title: "البطاقات",
           tabBarIcon: ({ color }) => <Feather name="credit-card" size={22} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="reports"
+        name="purchases"
         options={{
-          title: "التقارير",
-          tabBarIcon: ({ color }) => <Feather name="file-text" size={22} color={color} />,
+          title: "طلباتي",
+          tabBarIcon: ({ color }) => <Feather name="shopping-bag" size={22} color={color} />,
         }}
       />
-      <Tabs.Screen name="index" options={{ href: null }} />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: "حسابي",
+          tabBarIcon: ({ color }) => <Feather name="user" size={22} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

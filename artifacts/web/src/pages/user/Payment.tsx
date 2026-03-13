@@ -135,7 +135,7 @@ export default function PaymentScreen() {
       <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3">
         <CreditCard className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
         <p className="text-blue-700 text-sm font-medium">
-          بعد الدفع، تواصل مع المتجر لتأكيد التسديد وتصفير رصيد ذمتك.
+          بعد الدفع، أرسل فاتورة الدفع من خلال الرسائل.
         </p>
       </div>
 

@@ -35,7 +35,7 @@ function UserCard({ user, onPress }: { user: AppUser; onPress: () => void }) {
 type EditField = "name" | "phone" | "password" | "debt";
 
 export default function CustomersScreen() {
-  const { adminLoggedIn, users, updateUser, updateUserDebt, getUserRequests, getUserSales } = useApp();
+  const { adminLoggedIn, users, updateUser, updateUserDebt, deleteUser, getUserRequests, getUserSales } = useApp();
   const insets = useSafeAreaInsets();
   const topPad = insets.top + (Platform.OS === "web" ? 67 : 0);
   const [search, setSearch] = useState("");
@@ -223,6 +223,31 @@ export default function CustomersScreen() {
                     </Pressable>
                   </View>
 
+                  <Pressable
+                    style={styles.deleteUserBtn}
+                    onPress={() => {
+                      if (!selectedUser) return;
+                      Alert.alert(
+                        "حذف العميل",
+                        `هل تريد حذف حساب "${selectedUser.name}" نهائياً؟ لا يمكن التراجع.`,
+                        [
+                          { text: "إلغاء", style: "cancel" },
+                          {
+                            text: "حذف",
+                            style: "destructive",
+                            onPress: () => {
+                              deleteUser(selectedUser.id);
+                              setSelectedUser(null);
+                            },
+                          },
+                        ]
+                      );
+                    }}
+                  >
+                    <Feather name="trash-2" size={16} color="#EF4444" />
+                    <Text style={styles.deleteUserBtnText}>حذف الحساب نهائياً</Text>
+                  </Pressable>
+
                   <View style={{ height: 40 }} />
                 </ScrollView>
               </>
@@ -366,4 +391,9 @@ const styles = StyleSheet.create({
   cancelBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: "#64748B" },
   saveBtn: { flex: 2, paddingVertical: 14, borderRadius: 14, backgroundColor: "#00A651", alignItems: "center" },
   saveBtnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#fff" },
+  deleteUserBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    backgroundColor: "#FEE2E2", borderRadius: 14, paddingVertical: 14, marginTop: 8,
+  },
+  deleteUserBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#EF4444" },
 });

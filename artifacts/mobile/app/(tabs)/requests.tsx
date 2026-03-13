@@ -23,14 +23,18 @@ function formatPhoneForWhatsApp(phone: string): string {
   return "962" + cleaned;
 }
 
-function sendWhatsApp(phone: string, cardName: string, cardPrice: number) {
+function sendWhatsApp(phone: string, cardName: string, cardPrice: number, isConfirmation = false) {
   const formatted = formatPhoneForWhatsApp(phone);
-  const message =
-    `السلام عليكم 👋\n` +
-    `طلبك لـ ${cardName} (${cardPrice} JD) جاهز للمعالجة.\n\n` +
-    `يرجى إتمام الدفع عبر رابط الدفع:\n` +
-    `*AYOUB272*\n\n` +
-    `بمجرد تأكيد الدفع سيتم شحن الرقم فوراً ✅`;
+  const message = isConfirmation
+    ? `السلام عليكم 🎉\n` +
+      `تم شحن طلبك بنجاح!\n\n` +
+      `✅ ${cardName} (${cardPrice} JD)\n` +
+      `تم الشحن على رقمك. شكراً لتعاملك معنا 🙏`
+    : `السلام عليكم 👋\n` +
+      `طلبك لـ ${cardName} (${cardPrice} JD) جاهز للمعالجة.\n\n` +
+      `يرجى إتمام الدفع عبر رابط الدفع:\n` +
+      `*AYOUB272*\n\n` +
+      `بمجرد تأكيد الدفع سيتم شحن الرقم فوراً ✅`;
   const encoded = encodeURIComponent(message);
   const url = `https://wa.me/${formatted}?text=${encoded}`;
   Linking.openURL(url).catch(() =>
@@ -113,7 +117,25 @@ function RequestItem({
                   `شحن ${req.cardName} على رقم ${req.userPhone}؟`,
                   [
                     { text: "إلغاء", style: "cancel" },
-                    { text: "موافقة وشحن", onPress: onApprove },
+                    {
+                      text: "موافقة وشحن",
+                      onPress: () => {
+                        onApprove();
+                        setTimeout(() => {
+                          Alert.alert(
+                            "تم الشحن ✅",
+                            "هل تريد إرسال رسالة تأكيد للزبون عبر واتساب؟",
+                            [
+                              { text: "لا شكراً", style: "cancel" },
+                              {
+                                text: "إرسال واتساب",
+                                onPress: () => sendWhatsApp(req.userPhone, req.cardName, req.cardPrice, true),
+                              },
+                            ]
+                          );
+                        }, 300);
+                      },
+                    },
                   ]
                 )}
               >

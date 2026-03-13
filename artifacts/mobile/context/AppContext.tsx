@@ -97,6 +97,7 @@ type AppContextType = {
   users: AppUser[];
   updateUserDebt: (userId: string, debt: number) => void;
   updateUser: (userId: string, updates: Partial<AppUser>) => void;
+  deleteUser: (userId: string) => void;
 
   // Sales
   sales: Sale[];
@@ -116,6 +117,8 @@ type AppContextType = {
   getTotalRevenue: () => number;
   getTotalDebt: () => number;
   getOperatorSales: (operator: Operator) => number;
+  getTodayRevenue: () => number;
+  getTodaySalesCount: () => number;
 };
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -208,6 +211,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (currentUser?.id === userId) setCurrentUser((u) => u ? { ...u, ...updates } : u);
   }, [users, currentUser, persist]);
 
+  const deleteUser = useCallback((userId: string) => {
+    const updated = users.filter((u) => u.id !== userId);
+    setUsers(updated);
+    persist(KEYS.users, updated);
+    if (currentUser?.id === userId) setCurrentUser(null);
+  }, [users, currentUser, persist]);
+
   // Sales
   const addSale = useCallback((sale: Omit<Sale, "id" | "saleDate">) => {
     const newSale: Sale = {
@@ -250,7 +260,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
     setRequests(updatedReqs);
     persist(KEYS.requests, updatedReqs);
-    // Create a sale
     addSale({
       userId: req.userId,
       customerName: req.userName,
@@ -259,15 +268,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       cardName: req.cardName,
       operator: req.operator,
       cardValue: req.cardValue,
-      paidAmount: 0,
-      debt: req.cardPrice,
+      paidAmount: req.cardPrice,
+      debt: 0,
     });
-    // Update user debt
-    const user = users.find((u) => u.id === req.userId);
-    if (user) {
-      updateUserDebt(req.userId, user.debt + req.cardPrice);
-    }
-  }, [requests, persist, addSale, users, updateUserDebt]);
+  }, [requests, persist, addSale]);
 
   const rejectRequest = useCallback((reqId: string, note?: string) => {
     const updated = requests.map((r) =>
@@ -286,21 +290,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     sales.reduce((sum, s) => sum + s.paidAmount, 0), [sales]);
 
   const getTotalDebt = useCallback(() =>
-    sales.reduce((sum, s) => sum + s.debt, 0), [sales]);
+    users.reduce((sum, u) => sum + u.debt, 0), [users]);
 
   const getOperatorSales = useCallback((operator: Operator) =>
     sales.filter((s) => s.operator === operator).length, [sales]);
+
+  const getTodayRevenue = useCallback(() => {
+    const today = new Date().toDateString();
+    return sales
+      .filter((s) => new Date(s.saleDate).toDateString() === today)
+      .reduce((sum, s) => sum + s.paidAmount, 0);
+  }, [sales]);
+
+  const getTodaySalesCount = useCallback(() => {
+    const today = new Date().toDateString();
+    return sales.filter((s) => new Date(s.saleDate).toDateString() === today).length;
+  }, [sales]);
 
   return (
     <AppContext.Provider value={{
       adminLoggedIn, currentUser,
       adminLogin, adminLogout, userLogin, userRegister, userLogout,
       cards, updateCardPrice,
-      users, updateUserDebt, updateUser,
+      users, updateUserDebt, updateUser, deleteUser,
       sales, addSale, deleteSale, getUserSales,
       requests, addRequest, approveRequest, rejectRequest,
       pendingRequestsCount, getUserRequests,
       getTotalRevenue, getTotalDebt, getOperatorSales,
+      getTodayRevenue, getTodaySalesCount,
     }}>
       {children}
     </AppContext.Provider>

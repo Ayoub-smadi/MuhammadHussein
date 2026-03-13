@@ -52,7 +52,7 @@ export default function CardsScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 8 }]}>
         <Text style={styles.headerTitle}>إدارة البطاقات</Text>
-        <Text style={styles.headerSub}>اضغط على السعر لتعديله</Text>
+        <Text style={styles.headerSub}>اضغط على البطاقة لتعديل السعر • اضغط بيع مباشر للبيع النقدي</Text>
       </View>
 
       <View style={styles.opTabs}>
@@ -80,42 +80,53 @@ export default function CardsScreen() {
           const c = OP_CFG[card.operator];
           const isCustom = card.price !== card.value;
           return (
-            <Pressable
+            <View
               key={card.id}
-              style={({ pressed }) => [
-                styles.cardRow,
-                { borderLeftColor: c.color, borderLeftWidth: 4 },
-                pressed && { opacity: 0.85 },
-              ]}
-              onPress={() => openEdit(card)}
+              style={[styles.cardRow, { borderLeftColor: c.color, borderLeftWidth: 4 }]}
             >
-              <View style={styles.cardLeft}>
-                <View style={[styles.editBadge, { backgroundColor: c.color + "15" }]}>
-                  <Feather name="edit-2" size={13} color={c.color} />
-                  <Text style={[styles.editText, { color: c.color }]}>تعديل</Text>
-                </View>
-                {isCustom && (
-                  <View style={styles.customBadge}>
-                    <Feather name="check" size={10} color="#00A651" />
-                    <Text style={styles.customText}>مخصص</Text>
+              {/* Card info */}
+              <Pressable
+                style={styles.cardInfoArea}
+                onPress={() => openEdit(card)}
+              >
+                <View style={styles.cardLeft}>
+                  <View style={[styles.editBadge, { backgroundColor: c.color + "15" }]}>
+                    <Feather name="edit-2" size={12} color={c.color} />
+                    <Text style={[styles.editText, { color: c.color }]}>تعديل السعر</Text>
                   </View>
-                )}
-              </View>
-              <View style={{ alignItems: "flex-end" }}>
-                <Text style={styles.cardName}>{card.name}</Text>
-                <View style={styles.priceRow}>
                   {isCustom && (
-                    <Text style={styles.origPrice}>{card.value} JD</Text>
+                    <View style={styles.customBadge}>
+                      <Feather name="check" size={10} color="#00A651" />
+                      <Text style={styles.customText}>سعر مخصص</Text>
+                    </View>
                   )}
-                  <Text style={[styles.cardPrice, { color: c.color }]}>{card.price} JD</Text>
                 </View>
-              </View>
-            </Pressable>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={styles.cardName}>{card.name}</Text>
+                  <View style={styles.priceRow}>
+                    {isCustom && (
+                      <Text style={styles.origPrice}>{card.value} JD</Text>
+                    )}
+                    <Text style={[styles.cardPrice, { color: c.color }]}>{card.price} JD</Text>
+                  </View>
+                </View>
+              </Pressable>
+
+              {/* Direct sale button */}
+              <Pressable
+                style={[styles.saleBtn, { backgroundColor: c.color }]}
+                onPress={() => router.push({ pathname: "/sale-modal", params: { cardId: card.id } })}
+              >
+                <Feather name="zap" size={14} color="#fff" />
+                <Text style={styles.saleBtnText}>بيع</Text>
+              </Pressable>
+            </View>
           );
         })}
         <View style={{ height: 100 }} />
       </ScrollView>
 
+      {/* Edit price modal */}
       <Modal visible={!!editCard} transparent animationType="slide" onRequestClose={() => setEditCard(null)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -173,16 +184,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF", borderBottomWidth: 1, borderBottomColor: "#F1F5F9", gap: 4,
   },
   headerTitle: { fontSize: 22, fontFamily: "Inter_700Bold", color: "#0F172A", textAlign: "right" },
-  headerSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#94A3B8", textAlign: "right" },
+  headerSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#94A3B8", textAlign: "right" },
   opTabs: { flexDirection: "row", gap: 8, paddingHorizontal: 16, paddingVertical: 12, justifyContent: "flex-end" },
   opTab: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20, backgroundColor: "#F1F5F9" },
   opTabText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#64748B" },
   scroll: { flex: 1 },
   list: { padding: 16, gap: 10 },
   cardRow: {
-    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-    backgroundColor: "#FFFFFF", borderRadius: 16, padding: 16,
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: "#FFFFFF", borderRadius: 16, overflow: "hidden",
     shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+  },
+  cardInfoArea: {
+    flex: 1, flexDirection: "row", justifyContent: "space-between",
+    alignItems: "center", padding: 16,
   },
   cardLeft: { gap: 6 },
   editBadge: {
@@ -199,6 +214,11 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   origPrice: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#94A3B8", textDecorationLine: "line-through" },
   cardPrice: { fontSize: 20, fontFamily: "Inter_700Bold" },
+  saleBtn: {
+    flexDirection: "column", alignItems: "center", justifyContent: "center",
+    width: 56, alignSelf: "stretch", gap: 3,
+  },
+  saleBtnText: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#fff" },
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
   modalCard: {
     backgroundColor: "#FFFFFF", borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 16,

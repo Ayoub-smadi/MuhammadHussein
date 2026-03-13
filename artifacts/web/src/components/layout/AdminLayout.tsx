@@ -34,10 +34,15 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-slate-900 text-slate-300">
       <div className="p-6 pb-8 border-b border-slate-800">
-        <h1 className="text-2xl font-black text-white bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
-          لوحة التحكم
-        </h1>
-        <p className="text-sm font-medium mt-1 text-slate-400">نظام المبيعات</p>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-bl from-[#00C4B3] to-[#0088A3] flex items-center justify-center shadow-lg shadow-cyan-500/20">
+            <span className="text-white font-black text-lg">H</span>
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-white tracking-wide">Hussein</h1>
+            <p className="text-xs font-medium text-slate-400">لوحة تحكم الأدمن</p>
+          </div>
+        </div>
       </div>
 
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
@@ -80,14 +85,17 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
-      {/* Desktop Sidebar */}
       <aside className="hidden md:block w-72 h-screen sticky top-0 shrink-0 shadow-2xl z-20">
         <SidebarContent />
       </aside>
 
-      {/* Mobile Header & Menu */}
       <header className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-30 shadow-md">
-        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">نظام المبيعات</h1>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-bl from-[#00C4B3] to-[#0088A3] flex items-center justify-center shadow-md">
+            <span className="text-white font-black text-sm">H</span>
+          </div>
+          <h1 className="text-xl font-black text-white tracking-wide">Hussein</h1>
+        </div>
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 -mr-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
@@ -119,7 +127,6 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
       <main className="flex-1 w-full min-w-0">
         {children}
       </main>

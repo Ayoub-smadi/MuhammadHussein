@@ -25,10 +25,10 @@ export function UserLayout({ children }: { children: React.ReactNode }) {
       {/* Desktop Topbar */}
       <header className="hidden md:flex bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm h-16 items-center px-8">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-emerald-500/30">
-            {currentUser?.name.charAt(0) || "م"}
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-bl from-[#00C4B3] to-[#0088A3] flex items-center justify-center shadow-lg shadow-cyan-500/20">
+            <span className="text-white font-black text-base">H</span>
           </div>
-          <h1 className="text-xl font-bold text-slate-800 tracking-tight">نظام المبيعات</h1>
+          <h1 className="text-xl font-black text-slate-800 tracking-wide">Hussein</h1>
         </div>
         
         <nav className="flex-1 flex justify-center gap-2 px-8">
@@ -52,22 +52,24 @@ export function UserLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-all duration-200 font-medium cursor-pointer"
-        >
-          <span>تسجيل الخروج</span>
-          <LogOut size={18} />
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-bold text-slate-500">{currentUser?.name}</span>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-all duration-200 font-medium cursor-pointer"
+          >
+            <LogOut size={18} />
+          </button>
+        </div>
       </header>
 
       {/* Mobile Header */}
       <header className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold shadow-md shadow-emerald-500/20">
-            {currentUser?.name.charAt(0) || "م"}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-bl from-[#00C4B3] to-[#0088A3] flex items-center justify-center shadow-md">
+            <span className="text-white font-black text-sm">H</span>
           </div>
-          <h1 className="text-lg font-bold text-slate-800">مرحباً {currentUser?.name.split(" ")[0]}</h1>
+          <h1 className="text-lg font-black text-slate-800 tracking-wide">Hussein</h1>
         </div>
         <button 
           onClick={handleLogout}
@@ -77,7 +79,6 @@ export function UserLayout({ children }: { children: React.ReactNode }) {
         </button>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 w-full max-w-7xl mx-auto md:p-6">
         {children}
       </main>

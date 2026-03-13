@@ -69,11 +69,11 @@ export default function AuthPage() {
         <div className="glass-dark !bg-white/95 !border-slate-200/50 rounded-3xl p-8 shadow-2xl shadow-slate-200/50">
           
           <div className="text-center mb-10">
-            <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-emerald-500/30 transform rotate-3">
-              <ShieldCheck className="text-white w-8 h-8 -rotate-3" />
+            <div className="w-16 h-16 bg-gradient-to-bl from-[#00C4B3] to-[#0088A3] rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-cyan-500/30 transform rotate-3">
+              <span className="text-white font-black text-3xl -rotate-3">H</span>
             </div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">نظام المبيعات</h1>
-            <p className="text-slate-500 mt-2 font-medium">سجل دخولك للمتابعة</p>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Hussein</h1>
+            <p className="text-slate-500 mt-2 font-medium">نظام بطاقات الاتصالات</p>
           </div>
 
           <AnimatePresence mode="wait">

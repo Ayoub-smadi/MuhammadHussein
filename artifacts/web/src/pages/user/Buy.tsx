@@ -3,7 +3,7 @@ import { useApp, Operator } from "@/context/AppContext";
 import { motion, AnimatePresence } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
 import { toast } from "sonner";
-import { Zap, X, ShieldCheck } from "lucide-react";
+import { Zap, X, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
 
 const OP_CFG = {
@@ -35,6 +35,7 @@ export default function BuyScreen() {
   const { cards, addRequest, currentUser } = useApp();
   const [activeOp, setActiveOp] = useState<Operator>("zain");
   const [selectedCard, setSelectedCard] = useState<typeof cards[0] | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
 
   const filtered = cards.filter((c) => c.operator === activeOp);
 
@@ -52,10 +53,21 @@ export default function BuyScreen() {
       cardPrice: selectedCard.price,
     });
     setSelectedCard(null);
+    setConfirmed(false);
     toast.success("تم إرسال الطلب بنجاح", {
       description: "سيتم معالجة طلبك قريباً",
       action: { label: "عرض طلباتي", onClick: () => setLocation("/user/purchases") }
     });
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedCard(null);
+    setConfirmed(false);
+  };
+
+  const handleChangeCard = () => {
+    setSelectedCard(null);
+    setConfirmed(false);
   };
 
   return (
@@ -150,55 +162,126 @@ export default function BuyScreen() {
       </div>
 
       {/* Confirm Dialog */}
-      <Dialog.Root open={!!selectedCard} onOpenChange={(o) => !o && setSelectedCard(null)}>
+      <Dialog.Root open={!!selectedCard} onOpenChange={(o) => !o && handleCloseDialog()}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 animate-in fade-in" />
           <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[90vw] max-w-sm bg-white rounded-3xl shadow-2xl p-6 z-50 animate-in zoom-in-95 duration-200 focus:outline-none">
             {selectedCard && (
-              <form onSubmit={handleRequest}>
-                <div className="flex justify-end mb-2">
-                  <Dialog.Close asChild>
-                    <button type="button" className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
-                      <X className="w-4 h-4" />
+              <AnimatePresence mode="wait">
+                {!confirmed ? (
+                  /* Step 1: Review card */
+                  <motion.div
+                    key="review"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <Dialog.Title className="text-lg font-black text-slate-900">راجع اختيارك</Dialog.Title>
+                      <button
+                        type="button"
+                        onClick={handleCloseDialog}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Card preview */}
+                    <div className={`bg-gradient-to-bl ${OP_CFG[selectedCard.operator].gradient} rounded-2xl p-5 mb-4 mx-auto`} style={{ maxWidth: 260 }}>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                          <div className="w-5 h-5 rounded-full border-2 border-white/80" />
+                        </div>
+                        <span className="text-white font-black text-xl">{OP_CFG[selectedCard.operator].name}</span>
+                      </div>
+                      <div className="text-center mb-4">
+                        <span className="text-white font-black text-4xl">{selectedCard.value}</span>
+                        <span className="text-white/80 font-bold text-lg mr-2">JD</span>
+                      </div>
+                      <div className="flex justify-between items-end">
+                        <span className="text-white/60 text-xs font-bold">{selectedCard.name}</span>
+                        <div className="text-left">
+                          <div className="text-white font-black text-xl">{selectedCard.price} JD</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-center text-slate-500 font-medium text-sm mb-5">هل هذه البطاقة الصحيحة التي تريدها؟</p>
+
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={handleChangeCard}
+                        className="flex-1 py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <ArrowRight className="w-4 h-4" />
+                        تغيير البطاقة
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmed(true)}
+                        className={`flex-[2] py-3.5 rounded-xl text-white font-bold shadow-lg transition-transform active:scale-[0.98] bg-gradient-to-l ${OP_CFG[selectedCard.operator].gradient} flex items-center justify-center gap-2`}
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        نعم، هذه البطاقة
+                      </button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  /* Step 2: Final confirm & send */
+                  <motion.form
+                    key="confirm"
+                    onSubmit={handleRequest}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <button
+                        type="button"
+                        onClick={() => setConfirmed(false)}
+                        className="flex items-center gap-1 text-slate-500 font-bold text-sm hover:text-slate-700 transition-colors"
+                      >
+                        <ArrowRight className="w-4 h-4" />
+                        تراجع
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCloseDialog}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Confirmed card summary */}
+                    <div className={`${OP_CFG[selectedCard.operator].light} rounded-2xl p-4 mb-5 flex items-center gap-4`}>
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-bl ${OP_CFG[selectedCard.operator].gradient} flex items-center justify-center shrink-0`}>
+                        <CheckCircle2 className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className={`font-black text-base ${OP_CFG[selectedCard.operator].color}`}>{selectedCard.name}</p>
+                        <p className="text-slate-500 text-sm font-medium">{OP_CFG[selectedCard.operator].name} · {selectedCard.value} JD شحن</p>
+                        <p className="font-black text-slate-900 text-lg">{selectedCard.price} JD</p>
+                      </div>
+                    </div>
+
+                    <Dialog.Title className="text-xl font-black text-slate-900 text-center mb-1">تأكيد وإرسال الطلب</Dialog.Title>
+                    <p className="text-slate-500 font-medium text-sm text-center mb-5">سيتم إرسال الطلب للمراجعة والموافقة</p>
+
+                    <button
+                      type="submit"
+                      className={`w-full py-4 rounded-xl text-white font-bold shadow-lg transition-transform active:scale-[0.98] bg-gradient-to-l ${OP_CFG[selectedCard.operator].gradient} flex items-center justify-center gap-2`}
+                    >
+                      <Zap className="w-4 h-4 fill-white" />
+                      إرسال الطلب
                     </button>
-                  </Dialog.Close>
-                </div>
-
-                {/* Card preview */}
-                <div className={`bg-gradient-to-bl ${OP_CFG[selectedCard.operator].gradient} rounded-2xl p-5 mb-5 mx-auto`} style={{ maxWidth: 260 }}>
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                      <div className="w-5 h-5 rounded-full border-2 border-white/80" />
-                    </div>
-                    <span className="text-white font-black text-xl">{OP_CFG[selectedCard.operator].name}</span>
-                  </div>
-                  <div className="text-center mb-4">
-                    <span className="text-white font-black text-4xl">{selectedCard.value}</span>
-                    <span className="text-white/80 font-bold text-lg mr-2">JD</span>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <span className="text-white/60 text-xs font-bold">{selectedCard.name}</span>
-                    <div className="text-left">
-                      <div className="text-white font-black text-xl">{selectedCard.price} JD</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-center mb-5">
-                  <Dialog.Title className="text-xl font-black text-slate-900">تأكيد الطلب</Dialog.Title>
-                  <p className="text-slate-500 font-medium mt-1 text-sm">هل أنت متأكد من طلب هذه البطاقة؟</p>
-                </div>
-
-                <div className="flex gap-3">
-                  <Dialog.Close asChild>
-                    <button type="button" className="flex-1 py-4 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors">إلغاء</button>
-                  </Dialog.Close>
-                  <button type="submit" className={`flex-[2] py-4 rounded-xl text-white font-bold shadow-lg transition-transform active:scale-[0.98] bg-gradient-to-l ${OP_CFG[selectedCard.operator].gradient} flex items-center justify-center gap-2`}>
-                    <Zap className="w-4 h-4 fill-white" />
-                    تأكيد وإرسال الطلب
-                  </button>
-                </div>
-              </form>
+                  </motion.form>
+                )}
+              </AnimatePresence>
             )}
           </Dialog.Content>
         </Dialog.Portal>

@@ -79,7 +79,7 @@ export default function PaymentScreen() {
         <p className="font-black text-slate-900">خطوات الدفع عبر الكليك</p>
         {[
           { num: "١", text: 'افتح تطبيق البنك وادخل على "كليك"' },
-          { num: "٢", text: "ابحث عن الاسم" },
+          { num: "٢", text: "ضع الاسم أو رقم الهاتف الخاص بالدفع" },
           { num: "٣", text: `أدخل المبلغ المستحق: ${currentUser.debt > 0 ? currentUser.debt.toFixed(2) + " JD" : "حسب ذمتك"}` },
           { num: "٤", text: "أرسل الدفعة وانتظر التأكيد من المتجر" },
         ].map((step) => (

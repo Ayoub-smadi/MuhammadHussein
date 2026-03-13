@@ -70,11 +70,12 @@ const KEYS = {
   sales: "@hussein_sales_web",
   requests: "@hussein_requests_web",
   cardPrices: "@hussein_prices_web",
+  cardNames: "@hussein_cardnames_web",
+  customCards: "@hussein_customcards_web",
   auth: "@hussein_auth_web"
 };
 
 type AppContextType = {
-  // Auth
   adminLoggedIn: boolean;
   currentUser: AppUser | null;
   adminLogin: (password: string) => boolean;
@@ -83,23 +84,22 @@ type AppContextType = {
   userRegister: (name: string, phone: string, password: string) => { success: boolean; error?: string };
   userLogout: () => void;
 
-  // Cards
   cards: CardType[];
   updateCardPrice: (cardId: string, newPrice: number) => void;
+  updateCardName: (cardId: string, newName: string) => void;
+  addCard: (operator: Operator, name: string, value: number, price: number) => void;
+  deleteCard: (cardId: string) => void;
 
-  // Users management
   users: AppUser[];
   updateUserDebt: (userId: string, debt: number) => void;
   updateUser: (userId: string, updates: Partial<AppUser>) => void;
   deleteUser: (userId: string) => void;
 
-  // Sales
   sales: Sale[];
   addSale: (sale: Omit<Sale, "id" | "saleDate">) => void;
   deleteSale: (id: string) => void;
   getUserSales: (userId: string) => Sale[];
 
-  // Requests
   requests: CardRequest[];
   addRequest: (req: Omit<CardRequest, "id" | "requestDate" | "status">) => void;
   approveRequest: (reqId: string) => void;
@@ -107,13 +107,12 @@ type AppContextType = {
   pendingRequestsCount: number;
   getUserRequests: (userId: string) => CardRequest[];
 
-  // Stats
   getTotalRevenue: () => number;
   getTotalDebt: () => number;
   getOperatorSales: (operator: Operator) => number;
   getTodayRevenue: () => number;
   getTodaySalesCount: () => number;
-  
+
   isReady: boolean;
 };
 
@@ -136,14 +135,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [sales, setSales] = useState<Sale[]>([]);
   const [requests, setRequests] = useState<CardRequest[]>([]);
   const [cardPrices, setCardPrices] = useState<Record<string, number>>({});
+  const [cardNames, setCardNames] = useState<Record<string, string>>({});
+  const [customCards, setCustomCards] = useState<CardType[]>([]);
 
   useEffect(() => {
-    // Load state from localStorage on mount
     setUsers(getLocalData(KEYS.users, []));
     setSales(getLocalData(KEYS.sales, []));
     setRequests(getLocalData(KEYS.requests, []));
     setCardPrices(getLocalData(KEYS.cardPrices, {}));
-    
+    setCardNames(getLocalData(KEYS.cardNames, {}));
+    setCustomCards(getLocalData(KEYS.customCards, []));
+
     const authState = getLocalData<{type: 'admin' | 'user', id?: string} | null>(KEYS.auth, null);
     if (authState?.type === 'admin') {
       setAdminLoggedIn(true);
@@ -151,7 +153,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const u = getLocalData<AppUser[]>(KEYS.users, []).find(u => u.id === authState.id);
       if (u) setCurrentUser(u);
     }
-    
+
     setIsReady(true);
   }, []);
 
@@ -159,17 +161,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(key, JSON.stringify(data));
   }, []);
 
-  const cards: CardType[] = DEFAULT_CARDS.map((c) => ({
-    ...c,
-    price: cardPrices[c.id] ?? c.price,
-  }));
+  const cards: CardType[] = [
+    ...DEFAULT_CARDS.map((c) => ({
+      ...c,
+      price: cardPrices[c.id] ?? c.price,
+      name: cardNames[c.id] ?? c.name,
+    })),
+    ...customCards.map((c) => ({
+      ...c,
+      price: cardPrices[c.id] ?? c.price,
+      name: cardNames[c.id] ?? c.name,
+    })),
+  ];
 
-  // Auth
   const adminLogin = useCallback((pw: string) => {
-    if (pw === ADMIN_PASSWORD) { 
-      setAdminLoggedIn(true); 
+    if (pw === ADMIN_PASSWORD) {
+      setAdminLoggedIn(true);
       persist(KEYS.auth, { type: 'admin' });
-      return true; 
+      return true;
     }
     return false;
   }, [persist]);
@@ -181,10 +190,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const userLogin = useCallback((phone: string, pw: string) => {
     const user = users.find((u) => u.phone === phone && u.password === pw);
-    if (user) { 
-      setCurrentUser(user); 
+    if (user) {
+      setCurrentUser(user);
       persist(KEYS.auth, { type: 'user', id: user.id });
-      return true; 
+      return true;
     }
     return false;
   }, [users, persist]);
@@ -213,14 +222,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(KEYS.auth);
   }, []);
 
-  // Card prices
   const updateCardPrice = useCallback((cardId: string, price: number) => {
     const updated = { ...cardPrices, [cardId]: price };
     setCardPrices(updated);
     persist(KEYS.cardPrices, updated);
   }, [cardPrices, persist]);
 
-  // User management
+  const updateCardName = useCallback((cardId: string, name: string) => {
+    const updated = { ...cardNames, [cardId]: name };
+    setCardNames(updated);
+    persist(KEYS.cardNames, updated);
+  }, [cardNames, persist]);
+
+  const addCard = useCallback((operator: Operator, name: string, value: number, price: number) => {
+    const newCard: CardType = {
+      id: "custom_" + Date.now().toString() + Math.random().toString(36).substring(2, 6),
+      operator,
+      name: name.trim(),
+      value,
+      price,
+    };
+    const updated = [...customCards, newCard];
+    setCustomCards(updated);
+    persist(KEYS.customCards, updated);
+  }, [customCards, persist]);
+
+  const deleteCard = useCallback((cardId: string) => {
+    const updated = customCards.filter((c) => c.id !== cardId);
+    setCustomCards(updated);
+    persist(KEYS.customCards, updated);
+    const updatedPrices = { ...cardPrices };
+    delete updatedPrices[cardId];
+    setCardPrices(updatedPrices);
+    persist(KEYS.cardPrices, updatedPrices);
+    const updatedNames = { ...cardNames };
+    delete updatedNames[cardId];
+    setCardNames(updatedNames);
+    persist(KEYS.cardNames, updatedNames);
+  }, [customCards, cardPrices, cardNames, persist]);
+
   const updateUserDebt = useCallback((userId: string, debt: number) => {
     const updated = users.map((u) => u.id === userId ? { ...u, debt } : u);
     setUsers(updated);
@@ -245,7 +285,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [users, currentUser, persist]);
 
-  // Sales
   const addSale = useCallback((sale: Omit<Sale, "id" | "saleDate">) => {
     const newSale: Sale = {
       ...sale,
@@ -266,7 +305,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const getUserSales = useCallback((userId: string) =>
     sales.filter((s) => s.userId === userId), [sales]);
 
-  // Requests
   const addRequest = useCallback((req: Omit<CardRequest, "id" | "requestDate" | "status">) => {
     const newReq: CardRequest = {
       ...req,
@@ -295,7 +333,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       cardName: req.cardName,
       operator: req.operator,
       cardValue: req.cardValue,
-      paidAmount: req.cardPrice, // Setting paidAmount = cardPrice as per requested logic
+      paidAmount: req.cardPrice,
       debt: 0,
     });
   }, [requests, persist, addSale]);
@@ -339,7 +377,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       isReady,
       adminLoggedIn, currentUser,
       adminLogin, adminLogout, userLogin, userRegister, userLogout,
-      cards, updateCardPrice,
+      cards, updateCardPrice, updateCardName, addCard, deleteCard,
       users, updateUserDebt, updateUser, deleteUser,
       sales, addSale, deleteSale, getUserSales,
       requests, addRequest, approveRequest, rejectRequest,

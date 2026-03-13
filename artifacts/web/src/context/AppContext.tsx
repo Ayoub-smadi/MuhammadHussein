@@ -248,7 +248,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const userRegister = useCallback((name: string, phone: string, pw: string) => {
     if (!/^07[0-9]{8}$/.test(phone.trim())) {
-      return { success: false, error: "رقم الهاتف يجب أن يبدأ بـ 07 ومكوناً من 10 أرقام" };
+      return { success: false, error: "رقم الهاتف يجب أن يكون مكوناً من 10 أرقام ويبدأ بـ 07" };
     }
     if (users.find((u) => u.phone === phone)) {
       return { success: false, error: "رقم الهاتف مسجل مسبقاً" };

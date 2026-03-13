@@ -39,7 +39,7 @@ export default function AuthPage() {
   const handleUserRegister = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone || !password) { setError("يرجى تعبئة جميع الحقول"); return; }
-    if (!validateJordanPhone(phone)) { setError("رقم الهاتف يجب أن يكون أردنياً مكوناً من 10 أرقام ويبدأ بـ 07"); return; }
+    if (!validateJordanPhone(phone)) { setError("رقم الهاتف يجب أن يكون مكوناً من 10 أرقام ويبدأ بـ 07"); return; }
     const res = userRegister(name, phone, password);
     if (res.success) setLocation("/user");
     else setError(res.error || "حدث خطأ أثناء التسجيل");

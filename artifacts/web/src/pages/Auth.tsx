@@ -170,7 +170,6 @@ export default function AuthPage() {
                       value={phone} onChange={e => { const v = e.target.value.replace(/\D/g, "").slice(0,10); setPhone(v); setError(""); }}
                     />
                   </div>
-                  <p className="text-xs text-slate-400 mt-1.5 text-right">يجب أن يكون رقماً أردنياً مكوناً من 10 أرقام ويبدأ بـ 07</p>
                 </div>
                 <div className="relative">
                   <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />

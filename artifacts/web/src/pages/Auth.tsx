@@ -34,9 +34,12 @@ export default function AuthPage() {
     else setError("رقم الهاتف أو كلمة المرور غير صحيحة");
   };
 
+  const validateJordanPhone = (p: string) => /^07[0-9]{8}$/.test(p.trim());
+
   const handleUserRegister = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone || !password) { setError("يرجى تعبئة جميع الحقول"); return; }
+    if (!validateJordanPhone(phone)) { setError("رقم الهاتف يجب أن يكون أردنياً مكوناً من 10 أرقام ويبدأ بـ 07"); return; }
     const res = userRegister(name, phone, password);
     if (res.success) setLocation("/user");
     else setError(res.error || "حدث خطأ أثناء التسجيل");
@@ -158,13 +161,16 @@ export default function AuthPage() {
                     value={name} onChange={e => {setName(e.target.value); setError("");}}
                   />
                 </div>
-                <div className="relative">
-                  <Phone className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                  <input 
-                    type="tel" placeholder="رقم الهاتف (مثال: 0790000000)" 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-12 py-4 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-left" dir="ltr"
-                    value={phone} onChange={e => {setPhone(e.target.value); setError("");}}
-                  />
+                <div>
+                  <div className="relative">
+                    <Phone className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <input 
+                      type="tel" placeholder="07XXXXXXXX" inputMode="numeric" maxLength={10}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-12 py-4 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-left" dir="ltr"
+                      value={phone} onChange={e => { const v = e.target.value.replace(/\D/g, "").slice(0,10); setPhone(v); setError(""); }}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1.5 text-right">يجب أن يكون رقماً أردنياً مكوناً من 10 أرقام ويبدأ بـ 07</p>
                 </div>
                 <div className="relative">
                   <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />

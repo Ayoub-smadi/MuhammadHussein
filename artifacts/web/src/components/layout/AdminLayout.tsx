@@ -12,14 +12,16 @@ import {
   KeyRound,
   CheckCircle2,
   Lock,
-  User
+  User,
+  Moon,
+  Sun
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
-  const { adminLogout, pendingRequestsCount, adminName, updateAdminCredentials } = useApp();
+  const { adminLogout, pendingRequestsCount, adminName, updateAdminCredentials, isDark, toggleDark } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showChangePw, setShowChangePw] = useState(false);
   const [changeCurrent, setChangeCurrent] = useState("");
@@ -102,6 +104,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       </nav>
 
       <div className="p-4 border-t border-slate-800 space-y-1">
+        <button
+          onClick={toggleDark}
+          className="flex w-full items-center gap-3 px-4 py-3.5 text-slate-400 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-xl transition-all duration-200 font-medium cursor-pointer"
+        >
+          {isDark ? <Sun size={20} /> : <Moon size={20} />}
+          <span className="text-base">{isDark ? "الوضع النهاري" : "الوضع الليلي"}</span>
+        </button>
         <button
           onClick={openChangePw}
           className="flex w-full items-center gap-3 px-4 py-3.5 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-xl transition-all duration-200 font-medium cursor-pointer"

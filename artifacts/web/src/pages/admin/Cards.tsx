@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useApp, Operator } from "@/context/AppContext";
-import { Edit2, Check, X, Zap, Phone, Plus, Trash2, Type } from "lucide-react";
+import { Edit2, Check, X, Zap, Phone, Plus, Trash2, Type, Package, AlertTriangle, Minus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
 import { toast } from "sonner";
@@ -13,8 +13,17 @@ const OP_CFG = {
 
 const DEFAULT_IDS = new Set(["z1","z2","z3","z4","o1","o2","o3","o4","u1","u2","u3","u4"]);
 
+function StockBadge({ stock, threshold }: { stock: number; threshold: number }) {
+  if (stock === 0)
+    return <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600"><AlertTriangle className="w-3 h-3" />نفد المخزون</span>;
+  if (stock <= threshold)
+    return <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"><AlertTriangle className="w-3 h-3" />{stock} متبقي</span>;
+  return <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700"><Package className="w-3 h-3" />{stock} في المخزن</span>;
+}
+
 export default function CardsScreen() {
-  const { cards, updateCardPrice, updateCardName, addCard, deleteCard, addSale } = useApp();
+  const { cards, updateCardPrice, updateCardName, addCard, deleteCard, addSale,
+          cardStock, setCardStock, adjustStock, stockAlerts, setStockAlert } = useApp();
   const [activeOp, setActiveOp] = useState<Operator>("zain");
 
   const [editCard, setEditCard] = useState<typeof cards[0] | null>(null);
@@ -32,18 +41,17 @@ export default function CardsScreen() {
   const [addValue, setAddValue] = useState("");
   const [addPrice, setAddPrice] = useState("");
 
+  const [stockCard, setStockCard] = useState<typeof cards[0] | null>(null);
+  const [stockInput, setStockInput] = useState("");
+  const [alertInput, setAlertInput] = useState("");
+
   const filtered = cards.filter((c) => c.operator === activeOp);
 
   const openEditPrice = (card: typeof cards[0]) => {
-    setEditCard(card);
-    setEditMode("price");
-    setNewPrice(card.price.toString());
+    setEditCard(card); setEditMode("price"); setNewPrice(card.price.toString());
   };
-
   const openEditName = (card: typeof cards[0]) => {
-    setEditCard(card);
-    setEditMode("name");
-    setNewName(card.name);
+    setEditCard(card); setEditMode("name"); setNewName(card.name);
   };
 
   const handleSaveEdit = (e: React.FormEvent) => {
@@ -66,6 +74,8 @@ export default function CardsScreen() {
     e.preventDefault();
     if (!saleCard) return;
     if (!customerName.trim() || !customerPhone.trim()) { toast.error("يرجى تعبئة اسم ورقم العميل"); return; }
+    const stock = cardStock[saleCard.id] ?? undefined;
+    if (stock !== undefined && stock === 0) { toast.error("المخزون نفد! لا يمكن البيع."); return; }
     const paid = parseFloat(paidAmount) || 0;
     const debt = Math.max(0, saleCard.price - paid);
     addSale({
@@ -82,13 +92,34 @@ export default function CardsScreen() {
     setSaleCard(null);
     if (debt > 0) toast.warning(`تم البيع. متبقي دين: ${debt.toFixed(2)} JD`);
     else toast.success("تم البيع نقداً بنجاح!");
+    const newStock = stock !== undefined ? stock - 1 : undefined;
+    if (newStock !== undefined && newStock <= (stockAlerts[saleCard.id] ?? 5)) {
+      toast.warning(`تنبيه: مخزون ${saleCard.name} أصبح ${newStock} فقط`);
+    }
   };
 
   const openSaleModal = (card: typeof cards[0]) => {
     setSaleCard(card);
-    setCustomerName("");
-    setCustomerPhone("");
-    setPaidAmount(card.price.toString());
+    setCustomerName(""); setCustomerPhone(""); setPaidAmount(card.price.toString());
+  };
+
+  const openStockModal = (card: typeof cards[0]) => {
+    setStockCard(card);
+    setStockInput((cardStock[card.id] ?? 0).toString());
+    setAlertInput((stockAlerts[card.id] ?? 5).toString());
+  };
+
+  const handleSaveStock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stockCard) return;
+    const qty = parseInt(stockInput);
+    const threshold = parseInt(alertInput);
+    if (isNaN(qty) || qty < 0) { toast.error("أدخل كمية صحيحة"); return; }
+    if (isNaN(threshold) || threshold < 0) { toast.error("أدخل حد التنبيه صحيح"); return; }
+    setCardStock(stockCard.id, qty);
+    setStockAlert(stockCard.id, threshold);
+    toast.success(`تم تحديث مخزون ${stockCard.name}`);
+    setStockCard(null);
   };
 
   const handleAddCard = (e: React.FormEvent) => {
@@ -116,7 +147,7 @@ export default function CardsScreen() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">إدارة البطاقات</h1>
-          <p className="text-slate-500 mt-1 font-medium">إضافة وتعديل الأسعار والأسماء</p>
+          <p className="text-slate-500 mt-1 font-medium">إضافة وتعديل الأسعار والمخزون</p>
         </div>
         <button
           onClick={() => setAddOpen(true)}
@@ -151,6 +182,9 @@ export default function CardsScreen() {
             const cfg = OP_CFG[card.operator];
             const isCustom = card.price !== card.value;
             const isDeletable = !DEFAULT_IDS.has(card.id);
+            const stock = cardStock[card.id] ?? undefined;
+            const threshold = stockAlerts[card.id] ?? 5;
+            const outOfStock = stock !== undefined && stock === 0;
             return (
               <motion.div
                 key={card.id}
@@ -158,13 +192,18 @@ export default function CardsScreen() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden"
+                className={`bg-white rounded-3xl border shadow-sm hover:shadow-md transition-all overflow-hidden ${outOfStock ? "border-red-200 opacity-80" : "border-slate-100"}`}
               >
-                {/* Card Header - branded gradient */}
-                <div className={`bg-gradient-to-l ${cfg.gradient} px-5 py-4 flex justify-between items-center`}>
+                {/* Card Header */}
+                <div className={`bg-gradient-to-l ${cfg.gradient} px-5 py-4 flex justify-between items-start`}>
                   <div>
                     <p className="text-white/70 text-xs font-bold uppercase tracking-widest">{cfg.name}</p>
                     <p className="text-white font-black text-xl mt-0.5">{card.name}</p>
+                    {stock !== undefined && (
+                      <div className="mt-2">
+                        <StockBadge stock={stock} threshold={threshold} />
+                      </div>
+                    )}
                   </div>
                   <div className="text-right">
                     {isCustom && (
@@ -180,42 +219,141 @@ export default function CardsScreen() {
                 </div>
 
                 {/* Actions */}
-                <div className="p-4 flex gap-2">
-                  <button
-                    onClick={() => openEditName(card)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-colors border ${cfg.light} ${cfg.color} ${cfg.border} hover:bg-white`}
-                  >
-                    <Type className="w-4 h-4" />
-                    تعديل الاسم
-                  </button>
-                  <button
-                    onClick={() => openEditPrice(card)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-colors border ${cfg.light} ${cfg.color} ${cfg.border} hover:bg-white`}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    تعديل السعر
-                  </button>
-                  <button
-                    onClick={() => openSaleModal(card)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold text-white transition-colors ${cfg.bg} hover:opacity-90 shadow-md`}
-                  >
-                    <Zap className="w-4 h-4" />
-                    بيع
-                  </button>
-                  {isDeletable && (
+                <div className="p-4 space-y-2">
+                  <div className="flex gap-2">
                     <button
-                      onClick={() => handleDelete(card)}
-                      className="w-10 flex items-center justify-center rounded-xl text-red-400 hover:bg-red-50 transition-colors border border-red-100"
+                      onClick={() => openEditName(card)}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-colors border ${cfg.light} ${cfg.color} ${cfg.border} hover:bg-white`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Type className="w-4 h-4" />
+                      الاسم
                     </button>
-                  )}
+                    <button
+                      onClick={() => openEditPrice(card)}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-colors border ${cfg.light} ${cfg.color} ${cfg.border} hover:bg-white`}
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      السعر
+                    </button>
+                    <button
+                      onClick={() => openStockModal(card)}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-colors border border-slate-200 text-slate-600 bg-slate-50 hover:bg-slate-100"
+                    >
+                      <Package className="w-4 h-4" />
+                      المخزون
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openSaleModal(card)}
+                      disabled={outOfStock}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold text-white transition-colors shadow-md ${outOfStock ? "bg-slate-300 cursor-not-allowed" : `${cfg.bg} hover:opacity-90`}`}
+                    >
+                      <Zap className="w-4 h-4" />
+                      {outOfStock ? "نفد المخزون" : "بيع مباشر"}
+                    </button>
+                    {stock !== undefined && stock > 0 && (
+                      <div className="flex items-center gap-1 border border-slate-200 rounded-xl overflow-hidden">
+                        <button
+                          onClick={() => adjustStock(card.id, -1)}
+                          className="px-3 py-2 text-red-500 hover:bg-red-50 transition-colors font-bold"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="px-2 font-black text-slate-700 text-sm min-w-[2rem] text-center">{stock}</span>
+                        <button
+                          onClick={() => adjustStock(card.id, 1)}
+                          className="px-3 py-2 text-emerald-500 hover:bg-emerald-50 transition-colors font-bold"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                    {isDeletable && (
+                      <button
+                        onClick={() => handleDelete(card)}
+                        className="w-10 flex items-center justify-center rounded-xl text-red-400 hover:bg-red-50 transition-colors border border-red-100"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             );
           })}
         </AnimatePresence>
       </div>
+
+      {/* Stock Management Dialog */}
+      <Dialog.Root open={!!stockCard} onOpenChange={(o) => !o && setStockCard(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 animate-in fade-in" />
+          <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[90vw] max-w-md bg-white rounded-3xl shadow-2xl p-6 md:p-8 z-50 animate-in zoom-in-95 duration-200 focus:outline-none">
+            {stockCard && (
+              <form onSubmit={handleSaveStock}>
+                <div className="flex justify-between items-center mb-6">
+                  <Dialog.Title className="text-2xl font-black text-slate-900 flex items-center gap-2">
+                    <Package className="text-slate-600 w-6 h-6" />
+                    إدارة المخزون
+                  </Dialog.Title>
+                  <Dialog.Close asChild>
+                    <button type="button" className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </Dialog.Close>
+                </div>
+
+                <div className={`p-4 rounded-2xl mb-6 bg-gradient-to-l ${OP_CFG[stockCard.operator].gradient}`}>
+                  <p className="text-white font-black text-lg">{stockCard.name}</p>
+                  <p className="text-white/70 text-sm mt-1">السعر: {stockCard.price} JD</p>
+                </div>
+
+                <div className="space-y-5 mb-8">
+                  <div>
+                    <label className="text-sm font-bold text-slate-700 block mb-2">الكمية المتوفرة في المخزن</label>
+                    <div className="flex items-center gap-3">
+                      <button type="button" onClick={() => setStockInput(s => String(Math.max(0, parseInt(s||"0")-1)))}
+                        className="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors font-bold text-xl">
+                        <Minus className="w-5 h-5" />
+                      </button>
+                      <input
+                        autoFocus type="number" min="0"
+                        value={stockInput}
+                        onChange={(e) => setStockInput(e.target.value)}
+                        className="flex-1 bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-3 text-2xl font-black text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors text-center"
+                      />
+                      <button type="button" onClick={() => setStockInput(s => String(parseInt(s||"0")+1))}
+                        className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center hover:bg-emerald-100 transition-colors font-bold text-xl">
+                        <Plus className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-bold text-slate-700 block mb-1">حد التنبيه (ينبهك عندما يصل المخزون لهذا الرقم)</label>
+                    <input
+                      type="number" min="0"
+                      value={alertInput}
+                      onChange={(e) => setAlertInput(e.target.value)}
+                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-3 text-xl font-black text-slate-900 focus:outline-none focus:border-amber-500 transition-colors text-center"
+                    />
+                    <p className="text-xs text-slate-400 mt-1 font-medium">الافتراضي: 5 وحدات</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Dialog.Close asChild>
+                    <button type="button" className="flex-1 py-4 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors">إلغاء</button>
+                  </Dialog.Close>
+                  <button type="submit" className="flex-[2] py-4 rounded-xl bg-slate-900 text-white font-bold shadow-lg transition-transform active:scale-[0.98]">
+                    حفظ المخزون
+                  </button>
+                </div>
+              </form>
+            )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       {/* Add Card Dialog */}
       <Dialog.Root open={addOpen} onOpenChange={setAddOpen}>
@@ -231,22 +369,16 @@ export default function CardsScreen() {
                   </button>
                 </Dialog.Close>
               </div>
-
               <div className={`p-3 rounded-2xl mb-6 bg-gradient-to-l ${OP_CFG[activeOp].gradient} flex items-center gap-3`}>
                 <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
                   <Plus className="w-4 h-4 text-white" />
                 </div>
                 <p className="text-white font-bold">بطاقة {OP_CFG[activeOp].name} جديدة</p>
               </div>
-
               <div className="space-y-4 mb-8">
                 <div>
                   <label className="text-sm font-bold text-slate-700 block mb-2">اسم البطاقة</label>
-                  <input
-                    autoFocus
-                    type="text"
-                    value={addName}
-                    onChange={(e) => setAddName(e.target.value)}
+                  <input autoFocus type="text" value={addName} onChange={(e) => setAddName(e.target.value)}
                     placeholder="مثال: زين 3 دينار"
                     className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-3 text-base font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
@@ -254,29 +386,20 @@ export default function CardsScreen() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-sm font-bold text-slate-700 block mb-2">القيمة (JD)</label>
-                    <input
-                      type="number" step="0.01" min="0.01"
-                      value={addValue}
-                      onChange={(e) => setAddValue(e.target.value)}
+                    <input type="number" step="0.01" min="0.01" value={addValue} onChange={(e) => setAddValue(e.target.value)}
                       placeholder="3.00"
-                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-xl font-black text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors text-left"
-                      dir="ltr"
+                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-xl font-black text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors text-left" dir="ltr"
                     />
                   </div>
                   <div>
                     <label className="text-sm font-bold text-slate-700 block mb-2">سعر البيع (JD)</label>
-                    <input
-                      type="number" step="0.01" min="0.01"
-                      value={addPrice}
-                      onChange={(e) => setAddPrice(e.target.value)}
+                    <input type="number" step="0.01" min="0.01" value={addPrice} onChange={(e) => setAddPrice(e.target.value)}
                       placeholder="2.80"
-                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-xl font-black text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors text-left"
-                      dir="ltr"
+                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-xl font-black text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors text-left" dir="ltr"
                     />
                   </div>
                 </div>
               </div>
-
               <div className="flex gap-3">
                 <Dialog.Close asChild>
                   <button type="button" className="flex-1 py-4 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors">إلغاء</button>
@@ -290,7 +413,7 @@ export default function CardsScreen() {
         </Dialog.Portal>
       </Dialog.Root>
 
-      {/* Edit Dialog (price or name) */}
+      {/* Edit Dialog */}
       <Dialog.Root open={!!editCard} onOpenChange={(o) => !o && setEditCard(null)}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 animate-in fade-in" />
@@ -307,39 +430,29 @@ export default function CardsScreen() {
                     </button>
                   </Dialog.Close>
                 </div>
-
                 <div className={`p-4 rounded-2xl mb-6 bg-gradient-to-l ${OP_CFG[editCard.operator].gradient} border border-black/5`}>
                   <p className="text-white font-black text-lg">{editCard.name}</p>
                   <p className="text-white/70 text-sm font-medium mt-1">
                     {editMode === "price" ? `القيمة الأصلية: ${editCard.value} JD` : `السعر الحالي: ${editCard.price} JD`}
                   </p>
                 </div>
-
                 {editMode === "price" ? (
                   <div className="space-y-2 mb-8">
                     <label className="text-sm font-bold text-slate-700">السعر الجديد (دينار أردني)</label>
-                    <input
-                      autoFocus
-                      type="number" step="0.01" min="0.01"
-                      value={newPrice}
+                    <input autoFocus type="number" step="0.01" min="0.01" value={newPrice}
                       onChange={(e) => setNewPrice(e.target.value)}
-                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-4 text-2xl font-black text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors text-left"
-                      dir="ltr"
+                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-4 text-2xl font-black text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors text-left" dir="ltr"
                     />
                   </div>
                 ) : (
                   <div className="space-y-2 mb-8">
                     <label className="text-sm font-bold text-slate-700">الاسم الجديد</label>
-                    <input
-                      autoFocus
-                      type="text"
-                      value={newName}
+                    <input autoFocus type="text" value={newName}
                       onChange={(e) => setNewName(e.target.value)}
                       className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-4 text-xl font-black text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
                 )}
-
                 <div className="flex gap-3">
                   <Dialog.Close asChild>
                     <button type="button" className="flex-1 py-4 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors">إلغاء</button>
@@ -372,19 +485,19 @@ export default function CardsScreen() {
                     </button>
                   </Dialog.Close>
                 </div>
-
                 <div className={`flex justify-between items-center p-4 rounded-2xl mb-6 bg-gradient-to-l ${OP_CFG[saleCard.operator].gradient}`}>
                   <span className="font-bold text-white">{saleCard.name}</span>
-                  <span className="text-xl font-black text-white">{saleCard.price} JD</span>
+                  <div className="text-left">
+                    <span className="text-xl font-black text-white block">{saleCard.price} JD</span>
+                    {cardStock[saleCard.id] !== undefined && (
+                      <span className="text-white/70 text-xs font-medium">مخزون: {cardStock[saleCard.id]}</span>
+                    )}
+                  </div>
                 </div>
-
                 <div className="space-y-4 mb-8">
                   <div>
                     <label className="text-sm font-bold text-slate-700 block mb-2">اسم العميل</label>
-                    <input
-                      autoFocus type="text"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
+                    <input autoFocus type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="محمد أحمد"
                       className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
@@ -393,13 +506,9 @@ export default function CardsScreen() {
                     <label className="text-sm font-bold text-slate-700 block mb-2">رقم الهاتف</label>
                     <div className="relative">
                       <Phone className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                      <input
-                        type="tel"
-                        value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
+                      <input type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)}
                         placeholder="07XXXXXXXX"
-                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-12 py-3 text-base font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors text-left"
-                        dir="ltr"
+                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-12 py-3 text-base font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors text-left" dir="ltr"
                       />
                     </div>
                   </div>
@@ -412,16 +521,12 @@ export default function CardsScreen() {
                         </span>
                       )}
                     </label>
-                    <input
-                      type="number" step="0.01" min="0" max={saleCard.price}
-                      value={paidAmount}
-                      onChange={(e) => setPaidAmount(e.target.value)}
-                      className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-xl font-black text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors text-left"
-                      dir="ltr"
+                    <input type="number" step="0.01" min="0" max={saleCard.price}
+                      value={paidAmount} onChange={(e) => setPaidAmount(e.target.value)}
+                      className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-xl font-black text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors text-left" dir="ltr"
                     />
                   </div>
                 </div>
-
                 <div className="flex gap-3">
                   <Dialog.Close asChild>
                     <button type="button" className="flex-1 py-4 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors">إلغاء</button>

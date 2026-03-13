@@ -2,22 +2,15 @@ import React from "react";
 import { Link } from "wouter";
 import { useApp, Operator } from "@/context/AppContext";
 import { 
-  Users, 
-  ShoppingBag, 
-  Clock, 
-  CreditCard, 
-  Bell, 
-  FileText,
-  TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight
+  Users, ShoppingBag, Clock, CreditCard, Bell, FileText,
+  TrendingUp, ArrowUpRight, ArrowDownRight, AlertTriangle, Package, PhoneCall
 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { motion } from "framer-motion";
 
 const OP_CFG = {
-  zain: { name: "زين", color: "text-[#00A651]", bg: "bg-[#00A651]", light: "bg-[#E8F8EF]", border: "border-[#00A651]" },
+  zain:   { name: "زين",   color: "text-[#00A651]", bg: "bg-[#00A651]", light: "bg-[#E8F8EF]", border: "border-[#00A651]" },
   orange: { name: "أورنج", color: "text-[#FF6B00]", bg: "bg-[#FF6B00]", light: "bg-[#FFF0E6]", border: "border-[#FF6B00]" },
   umniah: { name: "أمنية", color: "text-[#E31E24]", bg: "bg-[#E31E24]", light: "bg-[#FDEAEA]", border: "border-[#E31E24]" },
 };
@@ -27,18 +20,18 @@ export default function Dashboard() {
     sales, users,
     getTotalRevenue, getTotalDebt, getOperatorSales,
     pendingRequestsCount, getTodayRevenue, getTodaySalesCount,
+    getLowStockCards, getDebtCustomers,
   } = useApp();
 
   const recentSales = [...sales].sort((a, b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()).slice(0, 5);
+  const lowStockCards = getLowStockCards();
+  const debtCustomers = getDebtCustomers().slice(0, 5);
+  const hasAlerts = lowStockCards.length > 0 || debtCustomers.length > 0;
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
@@ -52,7 +45,6 @@ export default function Dashboard() {
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">نظرة عامة</h1>
           <p className="text-slate-500 mt-1 font-medium">ملخص أداء النظام والمبيعات</p>
         </div>
-        
         {pendingRequestsCount > 0 && (
           <Link href="/admin/requests">
             <motion.div 
@@ -72,12 +64,12 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Stats */}
       <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-3 gap-4">
         
         <motion.div variants={itemVariants} className="md:col-span-3 bg-slate-900 rounded-3xl p-6 md:p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-slate-900/20 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none" />
-          
           <div className="flex items-center gap-6 relative z-10 w-full md:w-auto">
             <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/10 shadow-inner">
               <TrendingUp className="text-emerald-400 w-8 h-8" />
@@ -90,7 +82,6 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          
           <div className="flex gap-8 relative z-10 w-full md:w-auto border-t border-slate-700 md:border-t-0 md:border-r md:pr-8 pt-6 md:pt-0">
             <div>
               <p className="text-slate-400 font-medium text-sm mb-1 flex items-center gap-1">
@@ -140,6 +131,89 @@ export default function Dashboard() {
         </motion.div>
       </motion.div>
 
+      {/* ── Alerts Section ── */}
+      {hasAlerts && (
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        >
+          {/* Low Stock Alert */}
+          {lowStockCards.length > 0 && (
+            <div className="bg-white rounded-3xl border border-amber-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 bg-amber-50 border-b border-amber-100 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center">
+                  <Package className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-black text-amber-900 text-base">تنبيه مخزون منخفض</h3>
+                  <p className="text-amber-600 text-xs font-medium">{lowStockCards.length} بطاقة تحتاج إعادة تعبئة</p>
+                </div>
+              </div>
+              <div className="divide-y divide-slate-50">
+                {lowStockCards.map(card => (
+                  <div key={card.id} className="px-6 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-slate-800 text-sm">{card.name}</p>
+                      <p className="text-xs text-slate-400 font-medium">{OP_CFG[card.operator].name} · {card.price} JD</p>
+                    </div>
+                    <div className="text-left">
+                      {card.stock === 0 ? (
+                        <span className="flex items-center gap-1 text-xs font-black px-3 py-1.5 rounded-xl bg-red-100 text-red-600">
+                          <AlertTriangle className="w-3.5 h-3.5" /> نفد
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-xs font-black px-3 py-1.5 rounded-xl bg-amber-100 text-amber-700">
+                          <AlertTriangle className="w-3.5 h-3.5" /> {card.stock} متبقي
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="px-6 py-3 border-t border-slate-50">
+                <Link href="/admin/cards">
+                  <span className="text-sm font-bold text-amber-600 hover:text-amber-700 cursor-pointer">إدارة المخزون ←</span>
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Debt Customers Alert */}
+          {debtCustomers.length > 0 && (
+            <div className="bg-white rounded-3xl border border-red-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 bg-red-50 border-b border-red-100 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-red-500 flex items-center justify-center">
+                  <PhoneCall className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-black text-red-900 text-base">زبائن بديون قديمة</h3>
+                  <p className="text-red-600 text-xs font-medium">{debtCustomers.length} زبون لديهم ديون مستحقة</p>
+                </div>
+              </div>
+              <div className="divide-y divide-slate-50">
+                {debtCustomers.map(u => (
+                  <div key={u.id} className="px-6 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-slate-800 text-sm">{u.name}</p>
+                      <p className="text-xs text-slate-400 font-medium" dir="ltr">{u.phone}
+                        {u.daysSinceLastPurchase < 999 && (
+                          <span className="mr-2 text-slate-400">· منذ {u.daysSinceLastPurchase} يوم</span>
+                        )}
+                      </p>
+                    </div>
+                    <span className="text-sm font-black text-red-600 bg-red-50 px-3 py-1.5 rounded-xl">{u.debt.toFixed(2)} JD</span>
+                  </div>
+                ))}
+              </div>
+              <div className="px-6 py-3 border-t border-slate-50">
+                <Link href="/admin/customers">
+                  <span className="text-sm font-bold text-red-500 hover:text-red-600 cursor-pointer">إدارة العملاء ←</span>
+                </Link>
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Quick Actions & Operators */}
@@ -182,7 +256,6 @@ export default function Dashboard() {
                 const cfg = OP_CFG[op];
                 const count = getOperatorSales(op);
                 const pct = sales.length > 0 ? Math.round((count / sales.length) * 100) : 0;
-                
                 return (
                   <div key={op} className="flex items-center gap-4">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg ${cfg.light} ${cfg.color}`}>
@@ -207,7 +280,6 @@ export default function Dashboard() {
               })}
             </div>
           </motion.div>
-
         </div>
 
         {/* Recent Sales */}
@@ -218,12 +290,9 @@ export default function Dashboard() {
           <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <h3 className="text-lg font-bold text-slate-800">آخر العمليات</h3>
             <Link href="/admin/reports">
-              <span className="text-sm font-bold text-emerald-600 hover:text-emerald-700 cursor-pointer flex items-center gap-1">
-                عرض الكل
-              </span>
+              <span className="text-sm font-bold text-emerald-600 hover:text-emerald-700 cursor-pointer flex items-center gap-1">عرض الكل</span>
             </Link>
           </div>
-          
           <div className="flex-1 p-2">
             {recentSales.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-400 py-12">
@@ -256,7 +325,6 @@ export default function Dashboard() {
             )}
           </div>
         </motion.div>
-
       </div>
     </div>
   );

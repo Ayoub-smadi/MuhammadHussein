@@ -117,3 +117,69 @@
 .glass-dark {
   @apply bg-slate-900/90 backdrop-blur-md border border-slate-800 shadow-xl shadow-black/20;
 }
+
+/* ───── Dark Mode ───── */
+.dark {
+  --background: 222 47% 8%;
+  --foreground: 210 40% 95%;
+  --card: 222 47% 11%;
+  --card-foreground: 210 40% 95%;
+  --border: 217 33% 20%;
+  --input: 217 33% 20%;
+  --muted: 217 33% 16%;
+  --muted-foreground: 215 20% 60%;
+}
+
+.dark body {
+  background-color: #0d1117;
+  color: #e2e8f0;
+}
+
+/* Backgrounds */
+.dark .bg-slate-50  { background-color: #161b22 !important; }
+.dark .bg-slate-100 { background-color: #1c2333 !important; }
+.dark .bg-white     { background-color: #1e2636 !important; }
+.dark .bg-slate-200\/50 { background-color: rgba(30,38,54,0.8) !important; }
+
+/* Text */
+.dark .text-slate-900 { color: #f1f5f9 !important; }
+.dark .text-slate-800 { color: #e2e8f0 !important; }
+.dark .text-slate-700 { color: #cbd5e1 !important; }
+.dark .text-slate-600 { color: #94a3b8 !important; }
+.dark .text-slate-500 { color: #64748b !important; }
+.dark .text-slate-400 { color: #475569 !important; }
+
+/* Borders */
+.dark .border-slate-100 { border-color: #2d3748 !important; }
+.dark .border-slate-200 { border-color: #2d3748 !important; }
+.dark .border-slate-200\/50 { border-color: rgba(45,55,72,0.5) !important; }
+
+/* Inputs */
+.dark input:not([class*="bg-"]) { background-color: #1e2636; color: #f1f5f9; border-color: #2d3748; }
+.dark .bg-slate-50.border { background-color: #1c2333 !important; }
+
+/* Sidebar stays dark always */
+.dark .bg-slate-900 { background-color: #0d1117 !important; }
+
+/* Hover states */
+.dark .hover\:bg-slate-50:hover  { background-color: #1c2333 !important; }
+.dark .hover\:bg-slate-100:hover  { background-color: #1c2333 !important; }
+.dark .hover\:bg-slate-200:hover  { background-color: #2d3748 !important; }
+
+/* Shadows soften in dark */
+.dark .shadow-sm,
+.dark .shadow-md { box-shadow: 0 1px 8px rgba(0,0,0,0.4) !important; }
+
+/* Red/amber/blue light backgrounds */
+.dark .bg-red-50   { background-color: rgba(127,29,29,0.25) !important; }
+.dark .bg-amber-50 { background-color: rgba(120,53,15,0.25) !important; }
+.dark .bg-blue-50  { background-color: rgba(30,64,175,0.2)  !important; }
+.dark .bg-purple-50 { background-color: rgba(88,28,135,0.2) !important; }
+.dark .bg-emerald-50 { background-color: rgba(6,78,59,0.25) !important; }
+
+/* Dividers */
+.dark .divide-slate-50 > * + * { border-color: #2d3748 !important; }
+.dark .bg-slate-50\/50 { background-color: rgba(28,35,51,0.5) !important; }
+
+/* Modal overlay adapts */
+.dark .bg-slate-900\/80 { background-color: rgba(0,0,0,0.8) !important; }

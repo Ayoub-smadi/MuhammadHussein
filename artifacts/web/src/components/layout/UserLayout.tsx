@@ -1,13 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useLocation } from "wouter";
-import { CreditCard, Clock, User, LogOut, Menu, X } from "lucide-react";
+import { CreditCard, Clock, User, LogOut, Moon, Sun } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { motion, AnimatePresence } from "framer-motion";
 
 export function UserLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
-  const { userLogout, currentUser } = useApp();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { userLogout, currentUser, isDark, toggleDark } = useApp();
 
   const handleLogout = () => {
     userLogout();
@@ -52,8 +50,15 @@ export function UserLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-slate-500">{currentUser?.name}</span>
+          <button
+            onClick={toggleDark}
+            className="w-9 h-9 flex items-center justify-center rounded-full text-slate-400 hover:text-yellow-500 hover:bg-yellow-50 transition-all"
+            title={isDark ? "الوضع النهاري" : "الوضع الليلي"}
+          >
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 px-4 py-2.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-all duration-200 font-medium cursor-pointer"
@@ -71,12 +76,14 @@ export function UserLayout({ children }: { children: React.ReactNode }) {
           </div>
           <h1 className="text-lg font-black text-slate-800 tracking-wide">Hussein</h1>
         </div>
-        <button 
-          onClick={handleLogout}
-          className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-        >
-          <LogOut size={20} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={toggleDark} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-yellow-500 hover:bg-yellow-50 rounded-full transition-colors">
+            {isDark ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+          <button onClick={handleLogout} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+            <LogOut size={20} />
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 w-full max-w-7xl mx-auto md:p-6">

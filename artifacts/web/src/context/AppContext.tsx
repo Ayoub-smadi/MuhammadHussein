@@ -74,6 +74,9 @@ const KEYS = {
   customCards: "@hussein_customcards_web",
   auth: "@hussein_auth_web",
   adminCreds: "@hussein_admin_creds_web",
+  cardStock: "@hussein_cardstock_web",
+  stockAlerts: "@hussein_stockalerts_web",
+  theme: "@hussein_theme_web",
 };
 
 type AppContextType = {
@@ -93,10 +96,18 @@ type AppContextType = {
   addCard: (operator: Operator, name: string, value: number, price: number) => void;
   deleteCard: (cardId: string) => void;
 
+  cardStock: Record<string, number>;
+  setCardStock: (cardId: string, qty: number) => void;
+  adjustStock: (cardId: string, delta: number) => void;
+  stockAlerts: Record<string, number>;
+  setStockAlert: (cardId: string, threshold: number) => void;
+  getLowStockCards: () => (CardType & { stock: number; threshold: number })[];
+
   users: AppUser[];
   updateUserDebt: (userId: string, debt: number) => void;
   updateUser: (userId: string, updates: Partial<AppUser>) => void;
   deleteUser: (userId: string) => void;
+  getDebtCustomers: () => (AppUser & { daysSinceLastPurchase: number })[];
 
   sales: Sale[];
   addSale: (sale: Omit<Sale, "id" | "saleDate">) => void;
@@ -115,6 +126,9 @@ type AppContextType = {
   getOperatorSales: (operator: Operator) => number;
   getTodayRevenue: () => number;
   getTodaySalesCount: () => number;
+
+  isDark: boolean;
+  toggleDark: () => void;
 
   isReady: boolean;
 };
@@ -141,6 +155,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [cardPrices, setCardPrices] = useState<Record<string, number>>({});
   const [cardNames, setCardNames] = useState<Record<string, string>>({});
   const [customCards, setCustomCards] = useState<CardType[]>([]);
+  const [cardStock, setCardStockState] = useState<Record<string, number>>({});
+  const [stockAlerts, setStockAlertsState] = useState<Record<string, number>>({});
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     setUsers(getLocalData(KEYS.users, []));
@@ -150,6 +167,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCardNames(getLocalData(KEYS.cardNames, {}));
     setCustomCards(getLocalData(KEYS.customCards, []));
     setAdminCreds(getLocalData(KEYS.adminCreds, DEFAULT_ADMIN));
+    setCardStockState(getLocalData(KEYS.cardStock, {}));
+    setStockAlertsState(getLocalData(KEYS.stockAlerts, {}));
+
+    const savedTheme = getLocalData<boolean>(KEYS.theme, false);
+    setIsDark(savedTheme);
+    if (savedTheme) {
+      document.documentElement.classList.add("dark");
+    }
 
     const authState = getLocalData<{type: 'admin' | 'user', id?: string} | null>(KEYS.auth, null);
     if (authState?.type === 'admin') {
@@ -282,7 +307,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     delete updatedNames[cardId];
     setCardNames(updatedNames);
     persist(KEYS.cardNames, updatedNames);
-  }, [customCards, cardPrices, cardNames, persist]);
+    const updatedStock = { ...cardStock };
+    delete updatedStock[cardId];
+    setCardStockState(updatedStock);
+    persist(KEYS.cardStock, updatedStock);
+  }, [customCards, cardPrices, cardNames, cardStock, persist]);
+
+  const setCardStock = useCallback((cardId: string, qty: number) => {
+    const updated = { ...cardStock, [cardId]: Math.max(0, qty) };
+    setCardStockState(updated);
+    persist(KEYS.cardStock, updated);
+  }, [cardStock, persist]);
+
+  const adjustStock = useCallback((cardId: string, delta: number) => {
+    const current = cardStock[cardId] ?? 0;
+    const updated = { ...cardStock, [cardId]: Math.max(0, current + delta) };
+    setCardStockState(updated);
+    persist(KEYS.cardStock, updated);
+  }, [cardStock, persist]);
+
+  const setStockAlert = useCallback((cardId: string, threshold: number) => {
+    const updated = { ...stockAlerts, [cardId]: Math.max(0, threshold) };
+    setStockAlertsState(updated);
+    persist(KEYS.stockAlerts, updated);
+  }, [stockAlerts, persist]);
+
+  const getLowStockCards = useCallback(() => {
+    return cards
+      .filter(c => {
+        const stock = cardStock[c.id] ?? 0;
+        const threshold = stockAlerts[c.id] ?? 5;
+        return stock <= threshold;
+      })
+      .map(c => ({
+        ...c,
+        stock: cardStock[c.id] ?? 0,
+        threshold: stockAlerts[c.id] ?? 5,
+      }));
+  }, [cards, cardStock, stockAlerts]);
 
   const updateUserDebt = useCallback((userId: string, debt: number) => {
     const updated = users.map((u) => u.id === userId ? { ...u, debt } : u);
@@ -308,6 +370,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [users, currentUser, persist]);
 
+  const getDebtCustomers = useCallback(() => {
+    const now = Date.now();
+    return users
+      .filter(u => u.debt > 0)
+      .map(u => {
+        const lastSale = sales
+          .filter(s => s.userId === u.id || s.customerPhone === u.phone)
+          .sort((a, b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime())[0];
+        const daysSince = lastSale
+          ? Math.floor((now - new Date(lastSale.saleDate).getTime()) / 86400000)
+          : 999;
+        return { ...u, daysSinceLastPurchase: daysSince };
+      })
+      .sort((a, b) => b.debt - a.debt);
+  }, [users, sales]);
+
   const addSale = useCallback((sale: Omit<Sale, "id" | "saleDate">) => {
     const newSale: Sale = {
       ...sale,
@@ -317,7 +395,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const updated = [newSale, ...sales];
     setSales(updated);
     persist(KEYS.sales, updated);
-  }, [sales, persist]);
+    if (cardStock[sale.cardId] !== undefined) {
+      const updatedStock = { ...cardStock, [sale.cardId]: Math.max(0, (cardStock[sale.cardId] ?? 0) - 1) };
+      setCardStockState(updatedStock);
+      persist(KEYS.cardStock, updatedStock);
+    }
+  }, [sales, cardStock, persist]);
 
   const deleteSale = useCallback((id: string) => {
     const updated = sales.filter((s) => s.id !== id);
@@ -395,18 +478,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return sales.filter((s) => new Date(s.saleDate).toDateString() === today).length;
   }, [sales]);
 
+  const toggleDark = useCallback(() => {
+    setIsDark(prev => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+      localStorage.setItem(KEYS.theme, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   return (
     <AppContext.Provider value={{
       isReady,
       adminLoggedIn, adminName: adminCreds.name, currentUser,
       adminLogin, adminLogout, updateAdminCredentials, userLogin, userRegister, userLogout,
       cards, updateCardPrice, updateCardName, addCard, deleteCard,
-      users, updateUserDebt, updateUser, deleteUser,
+      cardStock, setCardStock, adjustStock, stockAlerts, setStockAlert, getLowStockCards,
+      users, updateUserDebt, updateUser, deleteUser, getDebtCustomers,
       sales, addSale, deleteSale, getUserSales,
       requests, addRequest, approveRequest, rejectRequest,
       pendingRequestsCount, getUserRequests,
       getTotalRevenue, getTotalDebt, getOperatorSales,
       getTodayRevenue, getTodaySalesCount,
+      isDark, toggleDark,
     }}>
       {children}
     </AppContext.Provider>

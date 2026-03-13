@@ -63,7 +63,7 @@ const DEFAULT_CARDS: CardType[] = [
   { id: "u4", operator: "umniah", name: "أمنية 10 دينار", value: 10, price: 10 },
 ];
 
-const ADMIN_PASSWORD = "admin123";
+const DEFAULT_ADMIN = { name: "Hussein", password: "Hussein123" };
 
 const KEYS = {
   users: "@hussein_users_web",
@@ -72,14 +72,17 @@ const KEYS = {
   cardPrices: "@hussein_prices_web",
   cardNames: "@hussein_cardnames_web",
   customCards: "@hussein_customcards_web",
-  auth: "@hussein_auth_web"
+  auth: "@hussein_auth_web",
+  adminCreds: "@hussein_admin_creds_web",
 };
 
 type AppContextType = {
   adminLoggedIn: boolean;
+  adminName: string;
   currentUser: AppUser | null;
   adminLogin: (password: string) => boolean;
   adminLogout: () => void;
+  updateAdminCredentials: (currentPw: string, newName: string, newPw: string) => { success: boolean; error?: string };
   userLogin: (phone: string, password: string) => boolean;
   userRegister: (name: string, phone: string, password: string) => { success: boolean; error?: string };
   userLogout: () => void;
@@ -130,6 +133,7 @@ function getLocalData<T>(key: string, fallback: T): T {
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
   const [adminLoggedIn, setAdminLoggedIn] = useState(false);
+  const [adminCreds, setAdminCreds] = useState(DEFAULT_ADMIN);
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [users, setUsers] = useState<AppUser[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -145,6 +149,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCardPrices(getLocalData(KEYS.cardPrices, {}));
     setCardNames(getLocalData(KEYS.cardNames, {}));
     setCustomCards(getLocalData(KEYS.customCards, []));
+    setAdminCreds(getLocalData(KEYS.adminCreds, DEFAULT_ADMIN));
 
     const authState = getLocalData<{type: 'admin' | 'user', id?: string} | null>(KEYS.auth, null);
     if (authState?.type === 'admin') {
@@ -175,7 +180,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   ];
 
   const adminLogin = useCallback((pw: string) => {
-    if (pw === ADMIN_PASSWORD) {
+    const stored = getLocalData(KEYS.adminCreds, DEFAULT_ADMIN);
+    if (pw === stored.password) {
       setAdminLoggedIn(true);
       persist(KEYS.auth, { type: 'admin' });
       return true;
@@ -187,6 +193,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAdminLoggedIn(false);
     localStorage.removeItem(KEYS.auth);
   }, []);
+
+  const updateAdminCredentials = useCallback((currentPw: string, newName: string, newPw: string) => {
+    const stored = getLocalData(KEYS.adminCreds, DEFAULT_ADMIN);
+    if (currentPw !== stored.password) {
+      return { success: false, error: "كلمة المرور الحالية غير صحيحة" };
+    }
+    if (!newName.trim()) {
+      return { success: false, error: "يرجى إدخال الاسم" };
+    }
+    if (newPw.length < 6) {
+      return { success: false, error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" };
+    }
+    const updated = { name: newName.trim(), password: newPw };
+    setAdminCreds(updated);
+    persist(KEYS.adminCreds, updated);
+    return { success: true };
+  }, [persist]);
 
   const userLogin = useCallback((phone: string, pw: string) => {
     const user = users.find((u) => u.phone === phone && u.password === pw);
@@ -375,8 +398,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider value={{
       isReady,
-      adminLoggedIn, currentUser,
-      adminLogin, adminLogout, userLogin, userRegister, userLogout,
+      adminLoggedIn, adminName: adminCreds.name, currentUser,
+      adminLogin, adminLogout, updateAdminCredentials, userLogin, userRegister, userLogout,
       cards, updateCardPrice, updateCardName, addCard, deleteCard,
       users, updateUserDebt, updateUser, deleteUser,
       sales, addSale, deleteSale, getUserSales,

@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
-  const { adminLogout, pendingRequestsCount } = useApp();
+  const { adminLogout, pendingRequestsCount, adminName } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
@@ -36,10 +36,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <div className="p-6 pb-8 border-b border-slate-800">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-bl from-[#00C4B3] to-[#0088A3] flex items-center justify-center shadow-lg shadow-cyan-500/20">
-            <span className="text-white font-black text-lg">H</span>
+            <span className="text-white font-black text-lg">{adminName.charAt(0)}</span>
           </div>
           <div>
-            <h1 className="text-xl font-black text-white tracking-wide">Hussein</h1>
+            <h1 className="text-xl font-black text-white tracking-wide">{adminName}</h1>
             <p className="text-xs font-medium text-slate-400">لوحة تحكم الأدمن</p>
           </div>
         </div>
@@ -92,9 +92,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <header className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-30 shadow-md">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-bl from-[#00C4B3] to-[#0088A3] flex items-center justify-center shadow-md">
-            <span className="text-white font-black text-sm">H</span>
+            <span className="text-white font-black text-sm">{adminName.charAt(0)}</span>
           </div>
-          <h1 className="text-xl font-black text-white tracking-wide">Hussein</h1>
+          <h1 className="text-xl font-black text-white tracking-wide">{adminName}</h1>
         </div>
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

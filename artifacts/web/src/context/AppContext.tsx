@@ -65,6 +65,18 @@ const DEFAULT_CARDS: CardType[] = [
 
 const DEFAULT_ADMIN = { name: "Hussein", password: "Hussein123" };
 
+export type StoreSettings = {
+  storeName: string;
+  cliqName: string;
+  whatsappPhone: string;
+};
+
+const DEFAULT_SETTINGS: StoreSettings = {
+  storeName: "Hussein",
+  cliqName: "AYOUB272",
+  whatsappPhone: "",
+};
+
 const KEYS = {
   users: "@hussein_users_web",
   sales: "@hussein_sales_web",
@@ -77,6 +89,7 @@ const KEYS = {
   cardStock: "@hussein_cardstock_web",
   stockAlerts: "@hussein_stockalerts_web",
   theme: "@hussein_theme_web",
+  storeSettings: "@hussein_store_settings_web",
 };
 
 type AppContextType = {
@@ -130,6 +143,9 @@ type AppContextType = {
   isDark: boolean;
   toggleDark: () => void;
 
+  storeSettings: StoreSettings;
+  updateStoreSettings: (settings: Partial<StoreSettings>) => void;
+
   isReady: boolean;
 };
 
@@ -158,6 +174,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [cardStock, setCardStockState] = useState<Record<string, number>>({});
   const [stockAlerts, setStockAlertsState] = useState<Record<string, number>>({});
   const [isDark, setIsDark] = useState(false);
+  const [storeSettings, setStoreSettingsState] = useState<StoreSettings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
     setUsers(getLocalData(KEYS.users, []));
@@ -169,6 +186,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAdminCreds(getLocalData(KEYS.adminCreds, DEFAULT_ADMIN));
     setCardStockState(getLocalData(KEYS.cardStock, {}));
     setStockAlertsState(getLocalData(KEYS.stockAlerts, {}));
+    setStoreSettingsState(getLocalData(KEYS.storeSettings, DEFAULT_SETTINGS));
 
     const savedTheme = getLocalData<boolean>(KEYS.theme, false);
     setIsDark(savedTheme);
@@ -494,6 +512,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const updateStoreSettings = useCallback((settings: Partial<StoreSettings>) => {
+    setStoreSettingsState(prev => {
+      const updated = { ...prev, ...settings };
+      localStorage.setItem(KEYS.storeSettings, JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   return (
     <AppContext.Provider value={{
       isReady,
@@ -508,6 +534,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getTotalRevenue, getTotalDebt, getOperatorSales,
       getTodayRevenue, getTodaySalesCount,
       isDark, toggleDark,
+      storeSettings, updateStoreSettings,
     }}>
       {children}
     </AppContext.Provider>

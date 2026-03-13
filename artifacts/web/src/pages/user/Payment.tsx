@@ -5,9 +5,9 @@ import { ArrowRight, Copy, CheckCircle2, Smartphone, CreditCard, AlertCircle } f
 import { toast } from "sonner";
 
 export default function PaymentScreen() {
-  const { currentUser } = useApp();
+  const { currentUser, storeSettings } = useApp();
   const [, setLocation] = useLocation();
-  const CLIQ_NAME = "AYOUB272";
+  const CLIQ_NAME = storeSettings.cliqName || "—";
 
   const handleCopy = () => {
     navigator.clipboard.writeText(CLIQ_NAME).then(() => {

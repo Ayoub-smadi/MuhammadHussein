@@ -1,13 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "wouter";
 import { useApp, Operator } from "@/context/AppContext";
 import { 
   Users, ShoppingBag, Clock, CreditCard, Bell, FileText,
-  TrendingUp, ArrowUpRight, ArrowDownRight, AlertTriangle, Package, PhoneCall
+  TrendingUp, ArrowUpRight, ArrowDownRight, AlertTriangle, Package, PhoneCall,
+  Settings, Save, Store, MessageCircle, Landmark
 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 const OP_CFG = {
   zain:   { name: "زين",   color: "text-[#00A651]", bg: "bg-[#00A651]", light: "bg-[#E8F8EF]", border: "border-[#00A651]" },
@@ -21,7 +23,20 @@ export default function Dashboard() {
     getTotalRevenue, getTotalDebt, getOperatorSales,
     pendingRequestsCount, getTodayRevenue, getTodaySalesCount,
     getLowStockCards, getDebtCustomers,
+    storeSettings, updateStoreSettings,
   } = useApp();
+
+  const [settingsForm, setSettingsForm] = useState({
+    storeName: storeSettings.storeName,
+    cliqName: storeSettings.cliqName,
+    whatsappPhone: storeSettings.whatsappPhone,
+  });
+
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateStoreSettings(settingsForm);
+    toast.success("تم حفظ الإعدادات بنجاح");
+  };
 
   const recentSales = [...sales].sort((a, b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()).slice(0, 5);
   const lowStockCards = getLowStockCards();
@@ -326,6 +341,65 @@ export default function Dashboard() {
           </div>
         </motion.div>
       </div>
+
+      {/* Store Settings */}
+      <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
+          <Settings className="w-5 h-5 text-slate-600" />
+          <h3 className="text-lg font-bold text-slate-800">إعدادات المتجر</h3>
+        </div>
+        <form onSubmit={handleSaveSettings} className="p-6 grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div>
+            <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
+              <Store className="w-4 h-4" /> اسم المتجر
+            </label>
+            <input
+              type="text"
+              value={settingsForm.storeName}
+              onChange={e => setSettingsForm(f => ({ ...f, storeName: e.target.value }))}
+              placeholder="Hussein"
+              className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors"
+            />
+          </div>
+          <div>
+            <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
+              <Landmark className="w-4 h-4" /> اسم الكليك CliQ
+            </label>
+            <input
+              type="text"
+              value={settingsForm.cliqName}
+              onChange={e => setSettingsForm(f => ({ ...f, cliqName: e.target.value }))}
+              placeholder="AYOUB272"
+              className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors"
+              dir="ltr"
+            />
+          </div>
+          <div>
+            <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
+              <MessageCircle className="w-4 h-4" /> رقم واتساب للتواصل
+            </label>
+            <input
+              type="text"
+              value={settingsForm.whatsappPhone}
+              onChange={e => setSettingsForm(f => ({ ...f, whatsappPhone: e.target.value }))}
+              placeholder="962791234567"
+              className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors"
+              dir="ltr"
+            />
+            <p className="text-xs text-slate-400 mt-1 font-medium">مثال: 962791234567 (بدون + أو 00)</p>
+          </div>
+          <div className="md:col-span-3 flex justify-end">
+            <button
+              type="submit"
+              className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-colors active:scale-95"
+            >
+              <Save className="w-4 h-4" />
+              حفظ الإعدادات
+            </button>
+          </div>
+        </form>
+      </motion.div>
+
     </div>
   );
 }

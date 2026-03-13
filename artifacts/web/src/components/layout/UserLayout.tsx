@@ -1,11 +1,13 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { CreditCard, Clock, User, LogOut, Moon, Sun } from "lucide-react";
+import { CreditCard, Clock, User, LogOut, Moon, Sun, MessageCircle } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 export function UserLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
-  const { userLogout, currentUser, isDark, toggleDark } = useApp();
+  const { userLogout, currentUser, isDark, toggleDark, storeSettings } = useApp();
+  const storeName = storeSettings.storeName || "Hussein";
+  const storeLetter = storeName.charAt(0).toUpperCase();
 
   const handleLogout = () => {
     userLogout();
@@ -24,9 +26,9 @@ export function UserLayout({ children }: { children: React.ReactNode }) {
       <header className="hidden md:flex bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm h-16 items-center px-8">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-bl from-[#00C4B3] to-[#0088A3] flex items-center justify-center shadow-lg shadow-cyan-500/20">
-            <span className="text-white font-black text-base">H</span>
+            <span className="text-white font-black text-base">{storeLetter}</span>
           </div>
-          <h1 className="text-xl font-black text-slate-800 tracking-wide">Hussein</h1>
+          <h1 className="text-xl font-black text-slate-800 tracking-wide">{storeName}</h1>
         </div>
         
         <nav className="flex-1 flex justify-center gap-2 px-8">
@@ -72,9 +74,9 @@ export function UserLayout({ children }: { children: React.ReactNode }) {
       <header className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-bl from-[#00C4B3] to-[#0088A3] flex items-center justify-center shadow-md">
-            <span className="text-white font-black text-sm">H</span>
+            <span className="text-white font-black text-sm">{storeLetter}</span>
           </div>
-          <h1 className="text-lg font-black text-slate-800 tracking-wide">Hussein</h1>
+          <h1 className="text-lg font-black text-slate-800 tracking-wide">{storeName}</h1>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={toggleDark} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-yellow-500 hover:bg-yellow-50 rounded-full transition-colors">
@@ -89,6 +91,19 @@ export function UserLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 w-full max-w-7xl mx-auto md:p-6">
         {children}
       </main>
+
+      {/* WhatsApp Floating Button */}
+      {storeSettings.whatsappPhone && (
+        <a
+          href={`https://wa.me/${storeSettings.whatsappPhone.replace(/\D/g, "")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-[88px] left-4 md:bottom-6 md:left-6 z-50 w-14 h-14 bg-[#25D366] hover:bg-[#1ebe5d] text-white rounded-full shadow-xl flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+          title="تواصل معنا على واتساب"
+        >
+          <MessageCircle className="w-7 h-7 fill-white stroke-none" />
+        </a>
+      )}
 
       {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center h-[72px] pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.03)] z-40 px-2">

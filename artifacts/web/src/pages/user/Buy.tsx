@@ -88,7 +88,7 @@ export default function BuyScreen() {
           <div className="flex items-center justify-between border-t border-amber-200 pt-3">
             <p className="text-amber-700 font-bold text-sm">هل تريد التسديد؟</p>
             <button
-              onClick={() => setLocation("/user/account")}
+              onClick={() => setLocation("/user/payment")}
               className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm active:scale-95"
             >
               اذهب لحسابي

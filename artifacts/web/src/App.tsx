@@ -19,6 +19,7 @@ import AdminReports from "@/pages/admin/Reports";
 import UserBuy from "@/pages/user/Buy";
 import UserPurchases from "@/pages/user/Purchases";
 import UserAccount from "@/pages/user/Account";
+import UserPayment from "@/pages/user/Payment";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,9 @@ function Router() {
       </Route>
       <Route path="/user/account">
         {() => <UserRoute component={UserAccount} />}
+      </Route>
+      <Route path="/user/payment">
+        {() => <UserRoute component={UserPayment} />}
       </Route>
 
       {/* Fallback */}

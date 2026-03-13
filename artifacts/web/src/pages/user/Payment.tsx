@@ -45,33 +45,72 @@ export default function PaymentScreen() {
         </div>
       )}
 
-      {/* CliQ Card */}
-      <div className="bg-gradient-to-br from-[#009B3A] to-[#006B27] rounded-3xl p-6 text-white shadow-xl shadow-emerald-900/20">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-            <Smartphone className="w-6 h-6 text-white" />
+      {/* CliQ Cards */}
+      <div className="space-y-4">
+
+        {/* CliQ by Name */}
+        <div className="bg-gradient-to-br from-[#009B3A] to-[#006B27] rounded-3xl p-6 text-white shadow-xl shadow-emerald-900/20">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+              <Smartphone className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-white/70 text-xs font-bold uppercase tracking-widest">الدفع عبر</p>
+              <p className="text-white font-black text-xl">CliQ — اسم</p>
+            </div>
           </div>
-          <div>
-            <p className="text-white/70 text-xs font-bold uppercase tracking-widest">الدفع عبر</p>
-            <p className="text-white font-black text-xl">CliQ</p>
+          <p className="text-white/60 text-xs font-bold mb-1">اسم الكليك</p>
+          <div className="flex items-center justify-between bg-white/15 rounded-2xl px-5 py-4 backdrop-blur-sm">
+            <span className="font-black text-2xl tracking-widest">{CLIQ_NAME}</span>
+            <button
+              onClick={handleCopy}
+              className="w-10 h-10 bg-white/20 hover:bg-white/30 transition-colors rounded-xl flex items-center justify-center"
+            >
+              <Copy className="w-5 h-5 text-white" />
+            </button>
           </div>
+          {storeSettings.cliqNameBank && (
+            <div className="mt-4 flex items-center gap-2 text-white/70">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <p className="text-xs font-medium">{storeSettings.cliqNameBank}</p>
+            </div>
+          )}
         </div>
 
-        <p className="text-white/60 text-xs font-bold mb-1">اسم الكليك</p>
-        <div className="flex items-center justify-between bg-white/15 rounded-2xl px-5 py-4 backdrop-blur-sm">
-          <span className="font-black text-2xl tracking-widest">{CLIQ_NAME}</span>
-          <button
-            onClick={handleCopy}
-            className="w-10 h-10 bg-white/20 hover:bg-white/30 transition-colors rounded-xl flex items-center justify-center"
-          >
-            <Copy className="w-5 h-5 text-white" />
-          </button>
-        </div>
-
-        <div className="mt-4 flex items-center gap-2 text-white/70">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <p className="text-xs font-medium">بنك الأردن — فوري وآمن</p>
-        </div>
+        {/* CliQ by Phone */}
+        {storeSettings.cliqPhone && (
+          <div className="bg-gradient-to-br from-[#1a6fd4] to-[#0d4fa3] rounded-3xl p-6 text-white shadow-xl shadow-blue-900/20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                <CreditCard className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-white/70 text-xs font-bold uppercase tracking-widest">الدفع عبر</p>
+                <p className="text-white font-black text-xl">CliQ — رقم هاتف</p>
+              </div>
+            </div>
+            <p className="text-white/60 text-xs font-bold mb-1">رقم الهاتف</p>
+            <div className="flex items-center justify-between bg-white/15 rounded-2xl px-5 py-4 backdrop-blur-sm">
+              <span className="font-black text-2xl tracking-widest" dir="ltr">{storeSettings.cliqPhone}</span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(storeSettings.cliqPhone).then(() => {
+                    toast.success("تم نسخ رقم الهاتف!");
+                  });
+                }}
+                className="w-10 h-10 bg-white/20 hover:bg-white/30 transition-colors rounded-xl flex items-center justify-center"
+              >
+                <Copy className="w-5 h-5 text-white" />
+              </button>
+            </div>
+            {storeSettings.cliqPhoneBank && (
+              <div className="mt-4 flex items-center gap-2 text-white/70">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <p className="text-xs font-medium">{storeSettings.cliqPhoneBank}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Steps */}

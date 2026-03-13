@@ -68,12 +68,18 @@ const DEFAULT_ADMIN = { name: "Hussein", password: "Hussein123" };
 export type StoreSettings = {
   storeName: string;
   cliqName: string;
+  cliqNameBank: string;
+  cliqPhone: string;
+  cliqPhoneBank: string;
   whatsappPhone: string;
 };
 
 const DEFAULT_SETTINGS: StoreSettings = {
   storeName: "Hussein",
   cliqName: "AYOUB272",
+  cliqNameBank: "بنك الأردن — فوري وآمن",
+  cliqPhone: "0797166460",
+  cliqPhoneBank: "بنك الأردن — فوري وآمن",
   whatsappPhone: "",
 };
 

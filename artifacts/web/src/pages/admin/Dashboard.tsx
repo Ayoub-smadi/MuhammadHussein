@@ -4,7 +4,7 @@ import { useApp, Operator } from "@/context/AppContext";
 import { 
   Users, ShoppingBag, Clock, CreditCard, Bell, FileText,
   TrendingUp, ArrowUpRight, ArrowDownRight, AlertTriangle, Package, PhoneCall,
-  Settings, Save, Store, MessageCircle, Landmark
+  Settings, Save, Store, MessageCircle, Landmark, Smartphone
 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -29,6 +29,9 @@ export default function Dashboard() {
   const [settingsForm, setSettingsForm] = useState({
     storeName: storeSettings.storeName,
     cliqName: storeSettings.cliqName,
+    cliqNameBank: storeSettings.cliqNameBank,
+    cliqPhone: storeSettings.cliqPhone,
+    cliqPhoneBank: storeSettings.cliqPhoneBank,
     whatsappPhone: storeSettings.whatsappPhone,
   });
 
@@ -348,47 +351,96 @@ export default function Dashboard() {
           <Settings className="w-5 h-5 text-slate-600" />
           <h3 className="text-lg font-bold text-slate-800">إعدادات المتجر</h3>
         </div>
-        <form onSubmit={handleSaveSettings} className="p-6 grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div>
-            <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
-              <Store className="w-4 h-4" /> اسم المتجر
-            </label>
-            <input
-              type="text"
-              value={settingsForm.storeName}
-              onChange={e => setSettingsForm(f => ({ ...f, storeName: e.target.value }))}
-              placeholder="Hussein"
-              className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors"
-            />
+        <form onSubmit={handleSaveSettings} className="p-6 space-y-6">
+
+          {/* Row 1: Store + WhatsApp */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
+                <Store className="w-4 h-4" /> اسم المتجر
+              </label>
+              <input
+                type="text"
+                value={settingsForm.storeName}
+                onChange={e => setSettingsForm(f => ({ ...f, storeName: e.target.value }))}
+                placeholder="Hussein"
+                className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
+                <MessageCircle className="w-4 h-4" /> رقم واتساب للتواصل
+              </label>
+              <input
+                type="text"
+                value={settingsForm.whatsappPhone}
+                onChange={e => setSettingsForm(f => ({ ...f, whatsappPhone: e.target.value }))}
+                placeholder="962791234567"
+                className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors"
+                dir="ltr"
+              />
+              <p className="text-xs text-slate-400 mt-1 font-medium">مثال: 962791234567 (بدون + أو 00)</p>
+            </div>
           </div>
-          <div>
-            <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
-              <Landmark className="w-4 h-4" /> اسم الكليك CliQ
-            </label>
-            <input
-              type="text"
-              value={settingsForm.cliqName}
-              onChange={e => setSettingsForm(f => ({ ...f, cliqName: e.target.value }))}
-              placeholder="AYOUB272"
-              className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors"
-              dir="ltr"
-            />
+
+          {/* Row 2: CliQ by Name */}
+          <div className="border border-emerald-100 bg-emerald-50/40 rounded-2xl p-4 space-y-3">
+            <p className="text-sm font-black text-emerald-700 flex items-center gap-2"><Landmark className="w-4 h-4" /> كليك — اسم</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-slate-600 mb-1 block">اسم الكليك</label>
+                <input
+                  type="text"
+                  value={settingsForm.cliqName}
+                  onChange={e => setSettingsForm(f => ({ ...f, cliqName: e.target.value }))}
+                  placeholder="AYOUB272"
+                  className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors"
+                  dir="ltr"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 mb-1 block">معلومات البنك</label>
+                <input
+                  type="text"
+                  value={settingsForm.cliqNameBank}
+                  onChange={e => setSettingsForm(f => ({ ...f, cliqNameBank: e.target.value }))}
+                  placeholder="بنك الأردن — فوري وآمن"
+                  className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
-              <MessageCircle className="w-4 h-4" /> رقم واتساب للتواصل
-            </label>
-            <input
-              type="text"
-              value={settingsForm.whatsappPhone}
-              onChange={e => setSettingsForm(f => ({ ...f, whatsappPhone: e.target.value }))}
-              placeholder="962791234567"
-              className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors"
-              dir="ltr"
-            />
-            <p className="text-xs text-slate-400 mt-1 font-medium">مثال: 962791234567 (بدون + أو 00)</p>
+
+          {/* Row 3: CliQ by Phone */}
+          <div className="border border-blue-100 bg-blue-50/40 rounded-2xl p-4 space-y-3">
+            <p className="text-sm font-black text-blue-700 flex items-center gap-2"><Smartphone className="w-4 h-4" /> كليك — رقم هاتف</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-slate-600 mb-1 block">رقم الهاتف</label>
+                <input
+                  type="text"
+                  value={settingsForm.cliqPhone}
+                  onChange={e => setSettingsForm(f => ({ ...f, cliqPhone: e.target.value }))}
+                  placeholder="0797166460"
+                  className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none focus:border-blue-500 transition-colors"
+                  dir="ltr"
+                />
+                <p className="text-xs text-slate-400 mt-1 font-medium">اتركه فارغاً لإخفاء هذا الخيار</p>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 mb-1 block">معلومات البنك</label>
+                <input
+                  type="text"
+                  value={settingsForm.cliqPhoneBank}
+                  onChange={e => setSettingsForm(f => ({ ...f, cliqPhoneBank: e.target.value }))}
+                  placeholder="بنك الأردن — فوري وآمن"
+                  className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+            </div>
           </div>
-          <div className="md:col-span-3 flex justify-end">
+
+          <div className="flex justify-end">
             <button
               type="submit"
               className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-colors active:scale-95"

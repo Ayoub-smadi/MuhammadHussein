@@ -1,6 +1,6 @@
 import React from "react";
 import { useApp } from "@/context/AppContext";
-import { User, Phone, LogOut, ShieldAlert, Award } from "lucide-react";
+import { User, Phone, LogOut, ShieldAlert, Award, Wallet } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function AccountScreen() {
@@ -25,17 +25,26 @@ export default function AccountScreen() {
       </div>
 
       {currentUser.debt > 0 ? (
-        <div className="bg-red-50 rounded-3xl p-6 border-2 border-red-100 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-red-100 text-red-500 rounded-2xl flex items-center justify-center">
-              <ShieldAlert className="w-6 h-6" />
+        <div className="bg-red-50 rounded-3xl p-6 border-2 border-red-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-red-100 text-red-500 rounded-2xl flex items-center justify-center">
+                <ShieldAlert className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="font-bold text-red-800">الرصيد المستحق (دين)</p>
+                <p className="text-sm font-medium text-red-500">يرجى تسديد المبلغ المتبقي</p>
+              </div>
             </div>
-            <div>
-              <p className="font-bold text-red-800">الرصيد المستحق (دين)</p>
-              <p className="text-sm font-medium text-red-500">يرجى تسديد المبلغ المتبقي</p>
-            </div>
+            <div className="text-3xl font-black text-red-600" dir="ltr">{currentUser.debt.toFixed(2)} JD</div>
           </div>
-          <div className="text-3xl font-black text-red-600" dir="ltr">{currentUser.debt.toFixed(2)} JD</div>
+          <button
+            onClick={() => setLocation("/user/payment")}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black transition-colors shadow-md shadow-red-600/30 active:scale-[0.98]"
+          >
+            <Wallet className="w-5 h-5" />
+            اذهب للدفع
+          </button>
         </div>
       ) : (
         <div className="bg-emerald-50 rounded-3xl p-6 border border-emerald-100 flex items-center gap-4 shadow-sm">

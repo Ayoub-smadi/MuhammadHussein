@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/web/"
-title = "بطاقات الاتصالات - نظام المبيعات"
+title = "نظام بطاقات الاتصالات"
 version = "1.0.0"
 id = "artifacts/web"
 router = "path"

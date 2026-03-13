@@ -74,15 +74,27 @@ export default function BuyScreen() {
     <div className="p-4 md:p-8 space-y-6">
 
       {currentUser && currentUser.debt > 0 && (
-        <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-3 text-amber-700">
-            <ShieldCheck className="w-6 h-6" />
-            <div>
-              <p className="font-bold text-sm">تنبيه ذمة مالية</p>
-              <p className="text-xs font-medium opacity-80">يوجد رصيد مستحق على حسابك</p>
+        <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 text-amber-700">
+              <ShieldCheck className="w-6 h-6 shrink-0" />
+              <div>
+                <p className="font-bold text-sm">تنبيه ذمة مالية</p>
+                <p className="text-xs font-medium opacity-80">يوجد رصيد مستحق على حسابك</p>
+              </div>
             </div>
+            <div className="font-black text-xl text-amber-700">{currentUser.debt.toFixed(2)} JD</div>
           </div>
-          <div className="font-black text-xl text-amber-700">{currentUser.debt.toFixed(2)} JD</div>
+          <div className="flex items-center justify-between border-t border-amber-200 pt-3">
+            <p className="text-amber-700 font-bold text-sm">هل تريد التسديد؟</p>
+            <button
+              onClick={() => setLocation("/user/account")}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm active:scale-95"
+            >
+              اذهب لحسابي
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 

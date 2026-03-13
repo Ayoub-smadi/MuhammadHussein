@@ -76,8 +76,8 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-50">
       <div className="absolute inset-0 z-0">
         <img 
-          src={`${import.meta.env.BASE_URL}images/auth-bg.png`} 
-          alt="Background" 
+          src={`${import.meta.env.BASE_URL}auth-bg.png`} 
+          alt="" 
           className="w-full h-full object-cover opacity-[0.15]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-50/80 to-transparent" />

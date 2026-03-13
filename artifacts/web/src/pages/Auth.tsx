@@ -180,7 +180,7 @@ export default function AuthPage() {
                   />
                 </div>
                 {error && <p className="text-red-500 text-sm font-bold text-center bg-red-50 py-2 rounded-lg">{error}</p>}
-                <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl py-4 font-bold text-lg shadow-xl shadow-emerald-500/20 transition-all active:scale-[0.98]">
+                <button type="submit" className="w-full text-white rounded-xl py-4 font-bold text-lg shadow-xl transition-all active:scale-[0.98]" style={{background: "linear-gradient(135deg, #00C4B3, #0088A3)"}}>
                   إنشاء الحساب
                 </button>
                 <div className="pt-4 text-center">

@@ -3,7 +3,7 @@ import { useApp, Operator } from "@/context/AppContext";
 import { motion, AnimatePresence } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
 import { toast } from "sonner";
-import { Zap, X, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Zap, X, ShieldCheck, ArrowRight, CheckCircle2, Ban } from "lucide-react";
 import { useLocation } from "wouter";
 
 const OP_CFG = {
@@ -32,7 +32,7 @@ const OP_LOGO: Record<Operator, React.ReactNode> = {
 
 export default function BuyScreen() {
   const [, setLocation] = useLocation();
-  const { cards, addRequest, currentUser } = useApp();
+  const { cards, addRequest, currentUser, cardStock } = useApp();
   const [activeOp, setActiveOp] = useState<Operator>("zain");
   const [selectedCard, setSelectedCard] = useState<typeof cards[0] | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -113,6 +113,8 @@ export default function BuyScreen() {
         <AnimatePresence mode="popLayout">
           {filtered.map((card) => {
             const cfg = OP_CFG[card.operator];
+            const stockVal = cardStock[card.id];
+            const outOfStock = stockVal !== undefined && stockVal === 0;
             return (
               <motion.button
                 key={card.id}
@@ -120,13 +122,25 @@ export default function BuyScreen() {
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.92 }}
-                whileHover={{ scale: 1.03, y: -2 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setSelectedCard(card)}
-                className="text-right focus:outline-none"
+                whileHover={outOfStock ? {} : { scale: 1.03, y: -2 }}
+                whileTap={outOfStock ? {} : { scale: 0.97 }}
+                onClick={() => !outOfStock && setSelectedCard(card)}
+                disabled={outOfStock}
+                className={`text-right focus:outline-none ${outOfStock ? "cursor-not-allowed" : ""}`}
               >
                 {/* Card shape */}
-                <div className={`bg-gradient-to-bl ${cfg.gradient} rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow`} style={{ aspectRatio: "1.6/1" }}>
+                <div
+                  className={`relative bg-gradient-to-bl ${cfg.gradient} rounded-2xl overflow-hidden shadow-lg transition-shadow ${outOfStock ? "opacity-50 grayscale" : "hover:shadow-xl"}`}
+                  style={{ aspectRatio: "1.6/1" }}
+                >
+                  {/* Out of stock overlay */}
+                  {outOfStock && (
+                    <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center z-10 gap-1">
+                      <Ban className="w-7 h-7 text-white drop-shadow-md" />
+                      <span className="text-white font-black text-sm drop-shadow-md">غير متوفر</span>
+                    </div>
+                  )}
+
                   {/* Top row: operator name */}
                   <div className="px-4 pt-4 pb-2 flex justify-between items-start">
                     <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
@@ -154,7 +168,9 @@ export default function BuyScreen() {
                 </div>
 
                 {/* Card name below */}
-                <p className="text-xs font-bold text-slate-500 mt-2 text-center truncate px-1">{card.name}</p>
+                <p className={`text-xs font-bold mt-2 text-center truncate px-1 ${outOfStock ? "text-slate-400" : "text-slate-500"}`}>
+                  {outOfStock ? "غير متوفر حالياً" : card.name}
+                </p>
               </motion.button>
             );
           })}
